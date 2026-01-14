@@ -311,7 +311,10 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
             const wordsArray = currentText.split(/(\s+)/);
             
             wordsArray.forEach((word, index) => {
-                const isActualWord = /\w+/.test(word);
+                // const isActualWord = /\w+/.test(word);
+                const isActualWord = /[\p{L}\p{N}]+/u.test(word);  // \p{L}: chữ cái bất kỳ ngôn ngữ, \p{N}: số
+                // Hoặc cụ thể cho tiếng Việt:
+                // const isActualWord = /[a-zA-Z0-9àáâãèéêìíòóôõùúăđĩũơưăạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]+/i.test(word);
                 const span = document.createElement('span');
                 span.innerText = word;
 
