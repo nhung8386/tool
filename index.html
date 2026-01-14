@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Master - Học Thuộc Lòng Thông Minh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .word-hidden {
+            background-color: #e0e7ff;
+            color: transparent;
+            border-bottom: 2px solid #818cf8;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+        .word-hidden:hover {
+            background-color: #c7d2fe;
+        }
+        .word-visible {
+            background-color: transparent;
+            color: #1e293b;
+        }
+        /* Tùy chỉnh thanh cuộn */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-900">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-indigo-700 flex items-center justify-center gap-2">
+                <i data-lucide="book-open" class="w-8 h-8"></i>
+                Memory Master
+            </h1>
+            <p class="text-slate-600 mt-2 text-sm md:text-base">Công cụ hỗ trợ học thuộc lòng bằng phương pháp ẩn từ ngẫu nhiên</p>
+        </header>
+
+        <!-- Input Mode UI -->
+        <div id="input-mode" class="space-y-6">
+            <!-- Thư viện bài mẫu cải tiến -->
+            <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="library" class="w-4 h-4 text-indigo-500"></i>
+                        Thư viện bài học mẫu
+                    </h2>
+                    
+                    <!-- Lọc theo danh mục -->
+                    <div id="category-filters" class="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                        <button onclick="filterSamples('Tất cả')" class="category-btn active px-3 py-1 text-xs rounded-full border border-indigo-200 bg-indigo-600 text-white transition-all">Tất cả</button>
+                        <button onclick="filterSamples('Khải huyền 2')" class="category-btn px-3 py-1 text-xs rounded-full border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 transition-all">Khải huyền 2</button>
+                        <button onclick="filterSamples('Khải huyền 3')" class="category-btn px-3 py-1 text-xs rounded-full border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 transition-all">Khải huyền 3</button>
+                    </div>
+                </div>
+
+                <!-- Grid hiển thị các thẻ bài mẫu -->
+                <div id="sample-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Các nút bài mẫu sẽ được render ở đây -->
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl p-6 transition-all border border-slate-100">
+                <div class="flex items-center justify-between mb-4">
+                    <label class="text-lg font-semibold text-slate-700 flex items-center gap-2">
+                        <i data-lucide="type" class="w-5 h-5 text-indigo-500"></i>
+                        Nội dung cần ghi nhớ
+                    </label>
+                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 text-sm font-medium" title="Xóa tất cả">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Xóa nhanh
+                    </button>
+                </div>
+                <textarea id="text-input" 
+                    class="w-full h-64 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-lg leading-relaxed text-slate-800 bg-slate-50/50"
+                    placeholder="Chọn từ thư viện bên trên hoặc dán nội dung của bạn vào đây..."></textarea>
+                <div class="mt-6 flex justify-end">
+                    <button onclick="startStudy()" id="start-btn"
+                        class="bg-indigo-600 hover:bg-indigo-700 transform hover:-translate-y-1 px-10 py-4 rounded-full font-bold text-white shadow-lg flex items-center gap-2 transition-all">
+                        Bắt đầu luyện tập <i data-lucide="play-circle" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Mode UI -->
+        <div id="study-mode" class="hidden bg-white rounded-2xl shadow-xl p-6 transition-all">
+            <!-- Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            Độ khó (Tỷ lệ ẩn: <span id="difficulty-val">70</span>%)
+                        </label>
+                    </div>
+                    <input type="range" id="difficulty-range" min="0" max="100" value="70" 
+                        class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                </div>
+                <div class="flex items-center justify-end gap-3">
+                    <button onclick="reShuffle()" class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors shadow-sm">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Trộn lại
+                    </button>
+                    <button onclick="stopStudy()" class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i> Sửa văn bản
+                    </button>
+                </div>
+            </div>
+            <!-- Content Display -->
+            <div class="p-4 md:p-8 border-l-4 border-indigo-200 bg-white min-h-[350px] rounded-r-xl shadow-inner overflow-hidden">
+                <div id="display-area" class="text-xl md:text-2xl leading-[2.8rem] text-slate-800 break-words whitespace-pre-wrap">
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-center gap-2 text-sm text-slate-400">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                <span>Nhấp vào ô trống để xem từ, nhấp lại để ẩn.</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CẤU HÌNH DỮ LIỆU MẪU ---
+        const SAMPLES = [
+            {
+                title: "Bức thư gửi cho hội thánh Ê-phê-sô",
+                category: "Khải huyền 2",
+                description: "Kh 2:1-7",
+                content: `Thư gửi cho sứ giả của hội thánh Ê-phê-sô rằng, đấng cầm bảy ngôi sao trong tay phải và đi giữa bảy chân đèn bằng vàng phán,
+Ta biết hành vi, sự khó nhọc và nhẫn nại của con. Và biết việc con không dung thứ những kẻ ác, con đã thử nghiệm những kẻ không phải sứ đồ mà tự xưng là sứ đồ và phơi bày sự giả dối đó.
+Rồi con chịu đựng, nhẫn nại vì danh Ta không chút lười nhác,
+Nhưng Ta có điều trách mắng con, con đã vứt bỏ tình yêu thương ban đầu,
+Vì vậy, hãy suy ngẫm con đã rớt xuống từ đâu, hãy ăn năn và giữ lấy hành vi ban đầu. Nếu không làm như vậy, nếu không ăn năn, Ta sẽ đến với con và lấy chân đèn của con khỏi chỗ nó. 6 Tuy nhiên, con được điều này, con căm ghét hành vi của đảng ni cô la, Ta cũng căm ghét điều đó.
+Người có tai hãy nghe lời thánh linh phán với các hội thánh. Người nào thắng, Ta sẽ cho ăn trái của cây sự sống trong thiên đường của Đức Chúa Trời.`
+            },
+            {
+                title: "Bức thư gửi cho hội thánh Sơ-mơ-na",
+                category: "Khải huyền 2",
+                description: "Kh 2:8-11",
+                content: `Thư gửi cho sứ giả của hội thánh Sơ-mơ-na rằng, Đấng Khởi Đầu và Tận Cùng, Đấng đã chết và sống lại phán,
+Ta biết hoạn nạn và sự khốn cùng của con, thực thể con là người giàu có, Ta biết cả sự nhạo báng của những kẻ tự xưng là người do thái nhưng thực thể không phải người do thái mà hội của satan.
+Con đừng sợ những khổ nạn sắp phải nhận. Kìa, ma quỷ sẽ ném mấy người trong các con vào ngục để thử nghiệm, các con sẽ phải chịu hoạn nạn trong mười ngày. Con hãy trung thành đến chết, nếu như vậy Ta sẽ ban cho con vương miện của sự sống.
+Người có tai hãy nghe lời thánh linh phán với các hội thánh. Người nào thắng sẽ không phải nhận tai họa của sự chết thứ hai.`
+            },
+           {
+                title: "Bức thư gửi cho hội thánh Bơ-ga-mô",
+                category: "Khải huyền 2",
+                description: "Kh 2:12-17",
+                content: `Thư gửi cho sứ giả của hội thánh Bơ-ga-mô rằng, đấng có gươm sắc hai lưỡi phán,
+Ta biết chỗ con đang ở, chỗ đó có ngai của satan. Con hãy nắm vững danh Ta. An-ti-ba chứng nhân trung thành của Ta dù ở giữa các con tức chỗ ở của satan, mặc dù phải chết nhưng đã không chối bỏ đức tin với Ta.
+Nhưng Ta có vài điều trách mắng con, có những người trong các con đi theo giáo huấn của Ba-la-am. Ba-la-am dạy Ba-lác đặt cạm bẫy trước Israel, cho ăn của cúng hình tượng, rồi cho gian dâm.
+Giống như vậy, con cũng có những người đi theo giáo huấn của đảng ni-cô-la.
+Vì vậy, hãy ăn năn đi. Nếu không ăn năn, Ta sẽ mau chóng đến với con và dùng gươm từ miệng Ta mà chiến đấu với chúng.
+Người có tai hãy nghe lời thánh linh phán với các hội thánh. Người nào thắng, Ta sẽ cho mana đang giấu kín và sẽ cho một hòn đá trắng, trên hòn đá có ghi một danh mới, ngoài người nhận chẳng một ai biết được danh mới đó.`
+            },
+            {
+                title: "Bức thư gửi cho hội thánh Tu-a-đi-ra",
+                category: "Khải huyền 2",
+                description: "Kh 2:18-29",
+                content: `Thư gửi cho sứ giả của hội thánh Tu-a-đi-ra rằng, đấng có mắt như ngọn đuốc, có chân như đồng sáng bóng giống Con Trai của Đức Chúa Trời phán,
+Ta biết sự nghiệp, tình yêu thương, đức tin, sự phụng sự và nhẫn nại của con. Các công việc về sau của con nhiều hơn các công việc ban đầu.
+Nhưng Ta có việc trách mắng con, con dung thứ cho Giê-sa-bên người nữ tự xưng là nhà tiên tri, kẻ quyến dụ dạy các đầy tớ Ta gian dâm và ăn của cúng hình tượng.
+Rồi Ta đã cho nó cơ hội ăn năn, nhưng nó không muốn ăn năn sự gian dâm đó,
+hãy nhìn, Ta sẽ ném nó lên giường nằm, rồi những người cùng gian dâm với nó nếu không ăn năn hành vi của họ Ta sẽ ném họ vào giữa hoạn nạn lớn,
+rồi Ta sẽ giết chết con cái của nó bằng sự chết, tất cả các hội thánh sẽ biết Ta là đấng dò xét ý định và tấm lòng của con người, Ta sẽ báo trả theo như hành vi của từng người.
+Ta nói với các con những người ở lại Tu-a-đi-ra nhưng không nhận giáo huấn này, các con không biết điều kín giấu của satan, Ta không đặt trên các con gánh nặng nào khác,
+duy nhất, hãy nắm vững những điều các con có cho tới khi Ta đến.
+Người nào thắng và người vâng giữ các công việc của Ta cho đến cuối cùng, Ta sẽ cho thẩm quyền cai trị các nước,
+Người sẽ dùng gậy sắt để cai trị và đập vỡ chúng như đồ gốm, cũng giống như Ta đã được nhận điều ấy từ cha Ta.
+Rồi Ta ban cho người ấy Sao Mai.
+Người có tai hãy nghe lời thánh linh phán với các hội thánh.`
+            },
+            {
+                title: "Bức thư gửi cho hội thánh Sa-tê",
+                category: "Khải huyền 3",
+                description: "Kh 3:1-6",
+                content: `Thư gửi cho sứ giả của hội thánh Sa-tê rằng, đấng cầm bảy linh của Đức Chúa Trời và bảy ngôi sao phán, Ta biết hành vi của con, con có danh còn sống nhưng con là người chết,
+Hãy thức tỉnh, hãy nắm vững những điều còn lại sắp chết, Ta không thấy hành vi trọn vẹn của con trước Đức Chúa Trời.
+Vì vậy, hãy suy xét con đã được nhận như thế nào, đã được nghe như thế nào, hãy gìn giữ và hãy ăn năn đi. Nếu không giác ngộ, Ta sẽ đến như kẻ trộm bất thình lình lúc nào con không thể biết được,
+nhưng con có mấy người ở Sa-tê không làm bẩn áo mình, họ mặc áo trắng và đi cùng Ta vì họ là những người xứng đáng.
+Người nào thắng sẽ được mặc áo trắng giống như vậy. Ta chắc chắn sẽ không xóa tên người ấy khỏi sách sự sống, Ta sẽ công nhận danh người trước cha Ta và trước các thiên sứ.
+Người có tai hãy nghe lời thánh linh phán với các hội thánh.`
+            },
+            {
+                title: "Bức thư gửi cho hội thánh Phi-la-đen-phi-a",
+                category: "Khải huyền 3",
+                description: "Kh 3:7-13",
+                content: `Thư gửi cho sứ giả của hội thánh Phi-la-đen-phi-a rằng, Đấng Thánh và Chân Thật, đấng cầm chìa khóa của Đa vít, tức nếu mở thì không một ai đóng, nếu đóng thì không một ai mở, ngài phán,
+Kìa, Ta đã đặt trước con một chiếc cửa mở, sẽ không một ai đóng nổi. Ta biết hành vi của con, con bằng năng lực nhỏ mọn nhưng gìn giữ lời Ta, đã không phản bội danh Ta.
+Kìa, hội của satan tức những kẻ tự xưng là người do thái nhưng thực sự không phải, Ta sẽ khiến mấy kẻ trong những kẻ nói dối này đến quỳ dưới chân con, để con biết Ta yêu thương con nhường nào,
+vì con đã gìn giữ ngôi lời nhẫn nại của Ta, Ta cũng sẽ giữ cho con thoát khỏi thời giờ thử nghiệm của satan, là thời giờ sắp đến trong khắp thế gian, là lúc thử nghiệm tất cả những người ở trên đất.
+Ta sẽ đến mau chóng, con hãy nắm vững những gì con có, đừng để ai cướp đi vương miện của con.
+Người nào thắng sẽ trở thành cột trụ trong đền thờ của Đức Chúa Trời Ta, người ấy sẽ không bao giờ phải ra khỏi đó nữa. Ta sẽ ghi danh của Đức Chúa Trời và Thành của Đức Chúa Trời tức danh của Thành Thánh Giê-ru-sa-lem mới từ Đức Chúa Trời Ta từ trời xuống và danh mới của Ta trên người ấy.
+Người có tai hãy nghe lời thánh linh phán với các hội thánh.`
+            },
+            {
+                title: "BBức thư gửi cho hội thánh Lao-đi-ghê-a",
+                category: "Khải huyền 3",
+                description: "Kh 3:14-22",
+                content: `Thư gửi cho sứ giả của hội thánh Lao-đi-ghê-a rằng, Đấng Amen, chứng nhân trung thành và chân thật, cội nguồn sáng tạo của Đức Chúa Trời phán,
+Ta biết hành vi của con, con không nóng cũng không lạnh, Ta muốn con hãy nóng hoặc lạnh, vì con hâm hẩm, không nóng cũng không lạnh thế này, nên Ta sẽ nhổ con rời khỏi miệng Ta. Con nói: con giàu có, con đầy đủ chẳng thiếu thốn gì, nhưng con không biết sự khốn khổ, đáng thương, nghèo ngặt, đui mù, lõa lồ của con,
+Ta khuyên con, hãy mua vàng đã luyện trong lửa từ Ta để trở nên giàu có, hãy mua áo trắng mặc vào để che đi sự lõa lồ xấu hổ, hãy mua thuốc mắt bôi vào để con thấy được.
+Ta chỉ trách mắng và sửa trị người mà Ta yêu thương, vì vậy con hãy sốt sắng và hãy ăn năn đi.
+Kìa, Ta sẽ đứng bên ngoài gõ cửa, bất cứ ai nghe tiếng Ta mà mở cửa, Ta sẽ vào ăn cùng người, và người sẽ được ăn cùng Ta.
+Người nào thắng, Ta sẽ cho ngồi cùng với Ta trên ngai Ta, giống như Ta đã thắng và được ngồi cùng với Cha trên ngai,
+Người có tai hãy nghe lời thánh linh phán với các hội thánh.
+`
+            },
+        ];
+
+        lucide.createIcons();
+
+        let currentText = "";
+        let difficulty = 70;
+        let seed = Math.random();
+        let currentFilter = "Tất cả";
+
+        const inputMode = document.getElementById('input-mode');
+        const studyMode = document.getElementById('study-mode');
+        const textInput = document.getElementById('text-input');
+        const displayArea = document.getElementById('display-area');
+        const diffRange = document.getElementById('difficulty-range');
+        const diffVal = document.getElementById('difficulty-val');
+        const sampleGrid = document.getElementById('sample-grid');
+
+        // Render danh sách mẫu theo filter
+        function renderSampleGrid() {
+            sampleGrid.innerHTML = "";
+            const filtered = currentFilter === "Tất cả" 
+                ? SAMPLES 
+                : SAMPLES.filter(s => s.category === currentFilter);
+
+            filtered.forEach(sample => {
+                const btn = document.createElement('button');
+                // Tăng chiều cao lên h-32 để chứa thêm description
+                btn.className = "text-left p-3 border border-slate-100 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-all flex flex-col h-32 group shadow-sm bg-white";
+                
+                btn.innerHTML = `
+                    <div class="flex-grow overflow-y-auto custom-scrollbar w-full mb-1">
+                        <span class="text-indigo-600 group-hover:text-indigo-700 font-bold text-xs leading-tight block mb-1">${sample.title}</span>
+                        <span class="text-slate-500 text-[10px] leading-relaxed block italic">${sample.description || ''}</span>
+                    </div>
+                    <span class="text-[9px] text-slate-400 mt-auto shrink-0 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 uppercase tracking-tighter font-semibold w-fit">${sample.category}</span>
+                `;
+                
+                btn.onclick = () => {
+                    textInput.value = sample.content;
+                    textInput.classList.add('ring-2', 'ring-indigo-300');
+                    setTimeout(() => textInput.classList.remove('ring-2', 'ring-indigo-300'), 500);
+                };
+                sampleGrid.appendChild(btn);
+            });
+        }
+
+        function filterSamples(category) {
+            currentFilter = category;
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if (btn.innerText === category) {
+                    btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-200');
+                    btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                } else {
+                    btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-200');
+                    btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                }
+            });
+            
+            renderSampleGrid();
+        }
+
+        function clearText() {
+            textInput.value = "";
+        }
+
+        function startStudy() {
+            currentText = textInput.value.trim();
+            if (!currentText) return;
+            
+            inputMode.classList.add('hidden');
+            studyMode.classList.remove('hidden');
+            renderText();
+        }
+
+        function stopStudy() {
+            studyMode.classList.add('hidden');
+            inputMode.classList.remove('hidden');
+        }
+
+        function reShuffle() {
+            seed = Math.random();
+            renderText();
+        }
+
+        diffRange.addEventListener('input', (e) => {
+            difficulty = e.target.value;
+            diffVal.innerText = difficulty;
+            renderText();
+        });
+
+        function renderText() {
+            displayArea.innerHTML = "";
+            const wordsArray = currentText.split(/(\s+)/);
+            
+            wordsArray.forEach((word, index) => {
+                const isActualWord = /\w+/.test(word);
+                const span = document.createElement('span');
+                span.innerText = word;
+
+                if (isActualWord) {
+                    const randomVal = Math.abs((Math.sin(index + seed) * 10000) % 100);
+                    const initiallyHidden = randomVal < difficulty;
+
+                    span.className = "inline-block px-1 mx-0.5 rounded cursor-pointer transition-all duration-300 " + 
+                                   (initiallyHidden ? "word-hidden" : "word-visible");
+                    
+                    span.onclick = () => {
+                        if (span.classList.contains('word-hidden')) {
+                            span.classList.remove('word-hidden');
+                            span.classList.add('word-visible');
+                        } else {
+                            span.classList.add('word-hidden');
+                            span.classList.remove('word-visible');
+                        }
+                    };
+                }
+                displayArea.appendChild(span);
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        renderSampleGrid();
+    </script>
+</body>
+</html>
