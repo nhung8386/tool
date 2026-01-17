@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,27 +19,33 @@
             height: 30px;
             margin-bottom: 5px; */
         }
+
         .word-hidden:hover {
             background-color: #c7d2fe;
         }
+
         .word-visible {
             background-color: transparent;
             color: #1e293b;
         }
+
         /* Tùy chỉnh thanh cuộn */
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
             height: 4px;
         }
+
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
+
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #c7d2fe;
             border-radius: 10px;
         }
     </style>
 </head>
+
 <body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-900">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
@@ -47,7 +54,8 @@
                 <i data-lucide="book-open" class="w-8 h-8"></i>
                 Memory Master
             </h1>
-            <p class="text-slate-600 mt-2 text-sm md:text-base">Công cụ hỗ trợ học thuộc lòng bằng phương pháp ẩn từ ngẫu nhiên</p>
+            <p class="text-slate-600 mt-2 text-sm md:text-base">Công cụ hỗ trợ học thuộc lòng bằng phương pháp ẩn từ
+                ngẫu nhiên</p>
         </header>
 
         <!-- Input Mode UI -->
@@ -60,17 +68,30 @@
                         Thư viện bài học mẫu
                     </h2>
 
-                    <!-- Lọc theo danh mục -->
-                    <div id="category-filters" class="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                        <button onclick="filterSamples('Tất cả')" class="category-btn active px-3 py-1 text-xs rounded-full border border-indigo-200 bg-indigo-600 text-white transition-all">Tất cả</button>
-                        <button onclick="filterSamples('Khải huyền 1')" class="category-btn px-3 py-1 text-xs rounded-full border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 transition-all">Khải huyền 1</button>
-                        <button onclick="filterSamples('Khải huyền 2')" class="category-btn px-3 py-1 text-xs rounded-full border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 transition-all">Khải huyền 2</button>
-                        <button onclick="filterSamples('Khải huyền 3')" class="category-btn px-3 py-1 text-xs rounded-full border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 transition-all">Khải huyền 3</button>
+
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-semibold text-slate-400 whitespace-nowrap">PHÂN LOẠI:</span>
+                        <select onchange="filterSamples(this.value); showDesc(this)"
+                            class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-1.5 outline-none">
+                            <option value="Tất cả">Tất cả</option>
+                            <option value="Khải huyền 1"
+                                data-desc="Tóm tắt và tổng kết toàn sách KH, Bắt đầu sự kiện KH và bí mật của bảy ngôi sao và bảy chân đèn vàng"
+                                >
+                                Khải huyền 1</option>
+                            <option value="Khải huyền 2" data-desc="Bức thư gửi sứ giả của bảy hội thánh">Khải huyền 2
+                            </option>
+                            <option value="Khải huyền 3" data-desc="Bức thư gửi sứ giả của bảy hội thánh">Khải huyền 3
+                            </option>
+                            <option value="Khải huyền 4" data-desc="Ngai và trật tự linh giới của ĐCT">Khải huyền 4</option>
+                        </select>
+                    </div>
+                    <div id="filter-desc" class="mt-2 text-xs text-slate-500 leading-relaxed max-w-md hidden">
                     </div>
                 </div>
 
                 <!-- Grid hiển thị các thẻ bài mẫu -->
-                <div id="sample-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                <div id="sample-grid"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                     <!-- Các nút bài mẫu sẽ được render ở đây -->
                 </div>
             </div>
@@ -81,11 +102,13 @@
                         <i data-lucide="type" class="w-5 h-5 text-indigo-500"></i>
                         Nội dung cần ghi nhớ
                     </label>
-                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 text-sm font-medium" title="Xóa tất cả">
+                    <button onclick="clearText()"
+                        class="text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 text-sm font-medium"
+                        title="Xóa tất cả">
                         <i data-lucide="trash-2" class="w-4 h-4"></i> Xóa nhanh
                     </button>
                 </div>
-                <textarea id="text-input" 
+                <textarea id="text-input"
                     class="w-full h-64 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-lg leading-relaxed text-slate-800 bg-slate-50/50"
                     placeholder="Chọn từ thư viện bên trên hoặc dán nội dung của bạn vào đây..."></textarea>
                 <div class="mt-6 flex justify-end">
@@ -108,21 +131,25 @@
                             Độ khó (Tỷ lệ ẩn: <span id="difficulty-val">70</span>%)
                         </label>
                     </div>
-                    <input type="range" id="difficulty-range" min="0" max="100" value="70" 
+                    <input type="range" id="difficulty-range" min="0" max="100" value="70"
                         class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                 </div>
                 <div class="flex items-center justify-end gap-3">
-                    <button onclick="reShuffle()" class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors shadow-sm">
+                    <button onclick="reShuffle()"
+                        class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors shadow-sm">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Trộn lại
                     </button>
-                    <button onclick="stopStudy()" class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors">
+                    <button onclick="stopStudy()"
+                        class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors">
                         <i data-lucide="edit-3" class="w-4 h-4"></i> Sửa văn bản
                     </button>
                 </div>
             </div>
             <!-- Content Display -->
-            <div class="p-4 md:p-8 border-l-4 border-indigo-200 bg-white min-h-[350px] rounded-r-xl shadow-inner overflow-hidden">
-                <div id="display-area" class="text-xl md:text-2xl leading-[2.8rem] text-slate-800 break-words whitespace-pre-wrap">
+            <div
+                class="p-4 md:p-8 border-l-4 border-indigo-200 bg-white min-h-[350px] rounded-r-xl shadow-inner overflow-hidden">
+                <div id="display-area"
+                    class="text-xl md:text-2xl leading-[2.8rem] text-slate-800 break-words whitespace-pre-wrap">
                 </div>
             </div>
 
@@ -166,7 +193,7 @@ Phán rằng : “Hãy viết điều con thấy vào một cuốn sách và g�
             {
                 title: "Bảy chân đèn bằng vàng và đấng giống như Con Người",
                 category: "Khải huyền 1",
-                description: "Kh 1:9-11",
+                description: "Kh 1:12-16",
                 content: `Tôi quay người lại để xem âm thanh đã phán với tôi, vừa quay lại tôi thấy bảy chân đèn bằng vàng,
 giữa các chân đèn có đấng giống như Con Người mặc áo trải dài qua bàn chân, thắt đai vàng ngang ngực,
 đầu và tóc ngài trắng giống như lông chiên, giống như tuyết, mắt ngài giống như ngọn đuốc, 15 chân ngài như đồng sáng bóng đã được luyện trong lò, giọng nói ngài như tiếng của nhiều dòng nước,
@@ -200,7 +227,7 @@ Ta biết hoạn nạn và sự khốn cùng của con, thực thể con là ng�
 Con đừng sợ những khổ nạn sắp phải nhận. Kìa, ma quỷ sẽ ném mấy người trong các con vào ngục để thử nghiệm, các con sẽ phải chịu hoạn nạn trong mười ngày. Con hãy trung thành đến chết, nếu như vậy Ta sẽ ban cho con vương miện của sự sống.
 Người có tai hãy nghe lời thánh linh phán với các hội thánh. Người nào thắng sẽ không phải nhận tai họa của sự chết thứ hai.`
             },
-           {
+            {
                 title: "Bức thư gửi cho hội thánh Bơ-ga-mô",
                 category: "Khải huyền 2",
                 description: "Kh 2:12-17",
@@ -264,8 +291,41 @@ Người nào thắng, Ta sẽ cho ngồi cùng với Ta trên ngai Ta, giống 
 Người có tai hãy nghe lời thánh linh phán với các hội thánh.
 `
             },
+            {
+                title: "Hình dạng ngai của Đức Chúa Trời ở linh giới, Hai mươi bốn trưởng lão và linh của bảy ngọn đèn",
+                category: "Khải huyền 4",
+                description: "Kh 4:1-5",
+                content: `Sau việc đó, tôi thấy ở trời có một chiếc cửa mở, tôi nghe thấy tiếng như tiếng kèn ban đầu đã phán với tôi, âm thanh ấy phán với tôi : “Hãy lên đây, Ta sẽ cho con thấy những việc sẽ phải xảy ra sau này”,
+lập tức, tôi được thánh linh cảm hóa, kìa! ngai được bày ra trên trời, trên ngai có một đấng đang ngồi.
+Đấng ngồi trên ngai trông như bích ngọc và hồng ngọc, rồi có cầu vồng bao phủ chung quanh ngai có hình dạng giống như lục bửu thạch,
+rồi chung quanh ngai có hai mươi bốn ngai khác, trên những ngai ấy có hai mươi bốn trưởng lão mặc áo trắng và đầu đội vương miện bằng vàng đang ngồi,
+từ ngai phát ra tia chớp, tiếng phán và tiếng sấm, phía trước ngai có bảy ngọn đèn thắp sáng, là bảy linh của Đức Chúa Trời.
+`
+            },
+            {
+                title: "Biển thủy tinh và bốn sinh vật và mắt",
+                category: "Khải huyền 4",
+                description: "Kh 4:6-11",
+                content: `Trước ngai có biển thủy tinh như pha lê, ở giữa ngai và chung quanh ngai có bốn sinh vật, phía trước và phía sau đầy những mắt,
+Sinh vật thứ nhất giống như sư tử, sinh vật thứ hai giống như bò con, sinh vật thứ ba có gương mặt giống như con người, sinh vật thứ tư giống như đại bàng đang bay.
+Bốn sinh vật, mỗi con có sáu cánh, ở trong và chung quanh đầy những mắt, họ ngày đêm không ngơi nghỉ mà phán rằng, “Thánh thay, Thánh thay, Thánh thay, Chúa là ĐỨC CHÚA TRỜI TOÀN NĂNG, ĐẤNG ĐÃ CÓ, HIỆN CÓ VÀ SẮP ĐẾN”,
+Khi các sinh vật dâng vinh quang, tôn quý, cảm tạ lên đấng hằng sống đời đời ngồi trên ngai, 10hai mươi bốn trưởng lão phủ phục trước đấng ngồi trên ngai, tung vương miện mình trước ngai và thờ lạy đấng hằng sống đời đời rồi phán,
+“Chúa là Đức Chúa Trời của chúng con, ngài xứng đáng được nhận vinh quang, tôn quý và năng lực. Chúa đã tạo dựng nên muôn vật, muôn vật theo ý Chúa mà có và do ngài đã tạo dựng.”
+`
+            },
         ];
 
+        function showDesc(select) {
+            // const desc = select.selectedOptions[0].dataset.desc || ''
+            // const box = document.getElementById('filter-desc')
+
+            // if (desc) {
+            //     box.textContent = desc
+            //     box.classList.remove('hidden')
+            // } else {
+            //     box.classList.add('hidden')
+            // }
+        }
         lucide.createIcons();
 
         let currentText = "";
@@ -284,15 +344,14 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
         // Render danh sách mẫu theo filter
         function renderSampleGrid() {
             sampleGrid.innerHTML = "";
-            const filtered = currentFilter === "Tất cả" 
-                ? SAMPLES 
+            const filtered = currentFilter === "Tất cả"
+                ? SAMPLES
                 : SAMPLES.filter(s => s.category === currentFilter);
 
             filtered.forEach(sample => {
                 const btn = document.createElement('button');
-                // Tăng chiều cao lên h-32 để chứa thêm description
-                btn.className = "text-left p-3 border border-slate-100 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-all flex flex-col h-32 group shadow-sm bg-white";
-                
+                btn.className = "text-left p-3 border border-slate-100 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-all flex flex-col h-28 group shadow-sm bg-white";
+
                 btn.innerHTML = `
                     <div class="flex-grow overflow-y-auto custom-scrollbar w-full mb-1">
                         <span class="text-indigo-600 group-hover:text-indigo-700 font-bold text-xs leading-tight block mb-1">${sample.title}</span>
@@ -300,7 +359,7 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
                     </div>
                     <span class="text-[9px] text-slate-400 mt-auto shrink-0 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 uppercase tracking-tighter font-semibold w-fit">${sample.category}</span>
                 `;
-                
+
                 btn.onclick = () => {
                     textInput.value = sample.content;
                     textInput.classList.add('ring-2', 'ring-indigo-300');
@@ -312,7 +371,7 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
 
         function filterSamples(category) {
             currentFilter = category;
-            
+
             document.querySelectorAll('.category-btn').forEach(btn => {
                 if (btn.innerText === category) {
                     btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-200');
@@ -322,7 +381,7 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
                     btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
                 }
             });
-            
+
             renderSampleGrid();
         }
 
@@ -333,7 +392,7 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
         function startStudy() {
             currentText = textInput.value.trim();
             if (!currentText) return;
-            
+
             inputMode.classList.add('hidden');
             studyMode.classList.remove('hidden');
             renderText();
@@ -358,7 +417,7 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
         function renderText() {
             displayArea.innerHTML = "";
             const wordsArray = currentText.split(/(\s+)/);
-            
+
             wordsArray.forEach((word, index) => {
                 // const isActualWord = /\w+/.test(word);
                 const isActualWord = /[\p{L}\p{N}]+/u.test(word);  // \p{L}: chữ cái bất kỳ ngôn ngữ, \p{N}: số
@@ -371,9 +430,9 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
                     const randomVal = Math.abs((Math.sin(index + seed) * 10000) % 100);
                     const initiallyHidden = randomVal < difficulty;
 
-                    span.className = "inline-block px-1 mx-0.5 rounded cursor-pointer transition-all duration-300 " + 
-                                   (initiallyHidden ? "word-hidden" : "word-visible");
-                    
+                    span.className = "inline-block px-1 mx-0.5 rounded cursor-pointer transition-all duration-300 " +
+                        (initiallyHidden ? "word-hidden" : "word-visible");
+
                     span.onclick = () => {
                         if (span.classList.contains('word-hidden')) {
                             span.classList.remove('word-hidden');
@@ -392,4 +451,5 @@ Người có tai hãy nghe lời thánh linh phán với các hội thánh.
         renderSampleGrid();
     </script>
 </body>
+
 </html>
