@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinh Thánh Online – Lời Hằng Sống</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c0a;
+    --bg2: #161410;
+    --bg3: #1e1b16;
+    --surface: #252118;
+    --surface2: #2e2a20;
+    --gold: #c9a84c;
+    --gold-light: #e4c97a;
+    --gold-dim: #8a6f2e;
+    --cream: #f5eed8;
+    --cream-dim: #b8aa88;
+    --red: #9b3a2a;
+    --text: #ede5cf;
+    --text-dim: #8a7f68;
+    --border: #2e2a1e;
+    --border-gold: #3d3520;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Lora', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+  /* ─── HEADER ─── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(180deg, #0e0c0a 80%, transparent);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border-gold);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-cross {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-cross::before {
+    content: '✟';
+    font-size: 18px;
+    color: var(--gold);
+  }
+
+  nav { display: flex; gap: 8px; }
+  nav a {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--cream-dim);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: all .2s;
+    letter-spacing: .5px;
+  }
+  nav a:hover, nav a.active {
+    color: var(--gold-light);
+    background: rgba(201,168,76,.12);
+  }
+
+  /* ─── LAYOUT ─── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ─── SIDEBAR LEFT ─── */
+  .sidebar-left {
+    border-right: 1px solid var(--border-gold);
+    padding: 24px 0;
+    position: sticky; top: 65px;
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    color: var(--gold-dim);
+    padding: 0 20px 12px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .testament-toggle {
+    display: flex;
+    margin: 16px 20px;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 3px;
+    border: 1px solid var(--border-gold);
+  }
+  .testament-btn {
+    flex: 1;
+    padding: 6px 0;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: .5px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 20px;
+    transition: all .2s;
+    border: none; background: none;
+  }
+  .testament-btn.active {
+    background: var(--gold);
+    color: var(--bg);
+    font-weight: 500;
+  }
+
+  /* ─── BOOK SEARCH ─── */
+  .book-search-wrap {
+    position: relative;
+    margin: 0 12px 10px;
+  }
+  .book-search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 13px; color: var(--gold-dim); pointer-events: none;
+  }
+  .book-search-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border-gold);
+    border-radius: 6px;
+    padding: 7px 10px 7px 30px;
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .book-search-input:focus {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 2px rgba(201,168,76,.1);
+  }
+  .book-search-input::placeholder { color: var(--text-dim); }
+  .book-search-clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 14px; line-height: 1;
+    display: none; padding: 2px;
+    transition: color .15s;
+  }
+  .book-search-clear:hover { color: var(--gold); }
+  .book-search-clear.visible { display: block; }
+  .book-no-result {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 20px 12px;
+    font-style: italic;
+  }
+
+  .book-list { padding: 0 8px; }
+  .book-group-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    padding: 12px 12px 6px;
+  }
+  .book-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--cream-dim);
+    transition: all .15s;
+    font-family: 'Lora', serif;
+  }
+  .book-item:hover { background: var(--surface); color: var(--cream); }
+  .book-item.active {
+    background: linear-gradient(135deg, rgba(201,168,76,.2), rgba(201,168,76,.05));
+    color: var(--gold-light);
+    border-left: 2px solid var(--gold);
+    padding-left: 10px;
+  }
+  .book-abbr {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  .main {
+    padding: 32px 48px;
+    max-width: 760px;
+    width: 100%;
+    justify-self: center;
+  }
+
+  /* ─── SEARCH BAR ─── */
+  .search-wrapper {
+    margin-bottom: 36px;
+    animation: fadeUp .5s ease both;
+  }
+
+  .search-top {
+    display: flex; gap: 10px; margin-bottom: 10px;
+  }
+
+  .search-input-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--gold-dim); font-size: 16px; pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius);
+    padding: 12px 14px 12px 42px;
+    color: var(--cream);
+    font-family: 'Lora', serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search-input:focus {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 3px rgba(201,168,76,.1);
+  }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .search-btn {
+    background: var(--gold);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 22px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    white-space: nowrap;
+  }
+  .search-btn:hover { background: var(--gold-light); }
+  .search-btn:active { transform: scale(.97); }
+
+  /* ─── SEARCH OPTIONS ─── */
+  .search-options {
+    background: var(--surface);
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .opt-group { display: flex; flex-direction: column; gap: 6px; }
+  .opt-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+  }
+
+  .opt-select {
+    background: var(--bg3);
+    border: 1px solid var(--border-gold);
+    border-radius: 5px;
+    color: var(--cream-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .opt-select:focus { border-color: var(--gold-dim); }
+
+  .opt-match {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .match-pill {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border-gold);
+    background: var(--bg3);
+    color: var(--text-dim);
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .match-pill.active, .match-pill:hover {
+    background: rgba(201,168,76,.15);
+    border-color: var(--gold-dim);
+    color: var(--gold-light);
+  }
+
+  .search-toggle-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--gold-dim);
+    cursor: pointer;
+    background: none; border: none;
+    padding: 6px 0;
+    transition: color .2s;
+    margin-top: 4px;
+  }
+  .search-toggle-btn:hover { color: var(--gold); }
+
+  .search-options-row {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    margin-top: 8px;
+  }
+
+  /* ─── CHAPTER NAV ─── */
+  .chapter-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+    animation: fadeUp .5s .1s ease both;
+  }
+  .chapter-title {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    color: var(--gold-light);
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .chapter-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: .5px;
+  }
+
+  .chapter-nav { display: flex; gap: 8px; }
+  .nav-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border-gold);
+    background: var(--surface);
+    color: var(--cream-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all .2s;
+  }
+  .nav-btn:hover {
+    background: var(--gold);
+    color: var(--bg);
+    border-color: var(--gold);
+  }
+
+  .version-tag {
+    background: rgba(201,168,76,.1);
+    border: 1px solid var(--border-gold);
+    color: var(--gold-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .version-tag:hover { background: rgba(201,168,76,.2); color: var(--gold); }
+
+  /* ─── VERSES ─── */
+  .verses { animation: fadeUp .5s .2s ease both; }
+
+  .verse-row {
+    display: flex; gap: 16px;
+    padding: 8px 0;
+    border-radius: 6px;
+    transition: background .15s;
+    cursor: pointer;
+    position: relative;
+  }
+  .verse-row:hover { background: rgba(201,168,76,.04); }
+  .verse-row.highlighted { background: rgba(201,168,76,.08); }
+  .verse-row.bookmarked::before {
+    content: '';
+    position: absolute; left: -12px; top: 10px;
+    width: 3px; height: calc(100% - 20px);
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  .verse-num {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold);
+    min-width: 24px;
+    padding-top: 3px;
+    text-align: right;
+    opacity: .8;
+    user-select: none;
+  }
+  .verse-text {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    flex: 1;
+  }
+  .verse-text .highlight { background: rgba(201,168,76,.22); border-radius: 2px; padding: 0 2px; }
+
+  .verse-actions {
+    display: none; align-items: center; gap: 6px;
+    position: absolute; right: 0; top: 6px;
+  }
+  .verse-row:hover .verse-actions { display: flex; }
+  .va-btn {
+    width: 28px; height: 28px;
+    border-radius: 5px; border: 1px solid var(--border-gold);
+    background: var(--surface); color: var(--cream-dim);
+    cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .va-btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+
+  .section-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    margin: 28px 0 12px 40px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-gold);
+  }
+
+  /* ─── CHAPTER GRID ─── */
+  .chapter-grid-wrap {
+    position: relative;
+    margin-bottom: 28px;
+  }
+  .chapter-grid-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .chapter-count-badge {
+    background: rgba(201,168,76,.12);
+    color: var(--gold-dim);
+    font-size: 10px;
+    padding: 2px 8px; border-radius: 10px;
+    border: 1px solid var(--border-gold);
+  }
+  .chapter-grid-scroll {
+    max-height: 160px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold-dim) transparent;
+  }
+  .chapter-grid-scroll::-webkit-scrollbar { width: 4px; }
+  .chapter-grid-scroll::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+  /* fade bottom edge khi còn nội dung bên dưới */
+  .chapter-grid-wrap::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 6px;
+    height: 32px;
+    background: linear-gradient(transparent, var(--bg));
+    pointer-events: none;
+    border-radius: 0 0 6px 6px;
+  }
+  .chapter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+    gap: 6px;
+    padding: 4px 0 20px;
+  }
+  .ch-btn {
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border-gold);
+    background: var(--surface);
+    color: var(--cream-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .ch-btn:hover { background: rgba(201,168,76,.15); color: var(--gold); border-color: var(--gold-dim); }
+  .ch-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 500; }
+
+  /* ─── SIDEBAR RIGHT ─── */
+  .sidebar-right {
+    border-left: 1px solid var(--border-gold);
+    padding: 24px 20px;
+    position: sticky; top: 65px;
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+  }
+
+  .widget {
+    background: var(--surface);
+    border: 1px solid var(--border-gold);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .widget-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .widget-title::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border-gold);
+  }
+
+  .votd {
+    background: linear-gradient(135deg, rgba(201,168,76,.12), rgba(201,168,76,.03));
+    border-color: var(--gold-dim);
+  }
+  .votd-verse {
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--cream);
+    margin-bottom: 10px;
+  }
+  .votd-ref {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+  .votd-share {
+    display: flex; gap: 6px; margin-top: 12px;
+  }
+  .share-btn {
+    flex: 1; padding: 7px 0; text-align: center;
+    border-radius: 5px; border: 1px solid var(--border-gold);
+    background: var(--bg3); color: var(--text-dim);
+    font-family: 'Inter', sans-serif; font-size: 11px;
+    cursor: pointer; transition: all .15s;
+  }
+  .share-btn:hover { background: rgba(201,168,76,.15); color: var(--gold); }
+
+  .bookmark-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .bookmark-item:last-child { border-bottom: none; }
+  .bk-ref {
+    font-family: 'Cinzel', serif;
+    font-size: 11px; color: var(--gold); letter-spacing: .5px;
+  }
+  .bk-text {
+    font-size: 12px; color: var(--text-dim); margin-top: 3px;
+    line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .bk-text:hover + .bk-ref { color: var(--gold-light); }
+
+  .lang-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border-radius: 6px;
+    border: 1px solid var(--border-gold);
+    background: var(--bg3);
+    color: var(--cream-dim);
+    font-family: 'Inter', sans-serif; font-size: 12px;
+    cursor: pointer; transition: all .15s;
+    margin-bottom: 6px;
+  }
+  .lang-btn:hover, .lang-btn.active {
+    background: rgba(201,168,76,.12); color: var(--gold-light);
+    border-color: var(--gold-dim);
+  }
+  .lang-flag { font-size: 16px; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--gold-dim);
+    color: var(--gold-light);
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    padding: 10px 20px; border-radius: 20px;
+    opacity: 0; transition: all .3s;
+    pointer-events: none; z-index: 999;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 220px 1fr; }
+    .sidebar-right { display: none; }
+  }
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar-left { display: none; }
+    .main { padding: 20px; }
+    .search-options { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="#" class="logo">
+    <span class="logo-cross"></span>
+    THÁNH KINH
+  </a>
+  <nav>
+    <a href="#" class="active">Đọc</a>
+    <a href="#">Kế Hoạch</a>
+    <a href="#">Video</a>
+    <a href="#">Câu Hôm Nay</a>
+    <a href="#">Cộng Đồng</a>
+  </nav>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="version-tag" id="langToggle">🌐 VI</button>
+    <button class="search-btn" style="padding:8px 16px;font-size:12px;">Đăng Nhập</button>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR LEFT -->
+  <aside class="sidebar-left">
+    <div class="sidebar-title">Mục Lục</div>
+
+    <div class="testament-toggle">
+      <button class="testament-btn active" onclick="toggleTestament('old',this)">Cựu Ước</button>
+      <button class="testament-btn" onclick="toggleTestament('new',this)">Tân Ước</button>
+    </div>
+
+    <div class="book-search-wrap">
+      <span class="book-search-icon">🔍</span>
+      <input class="book-search-input" id="bookSearchInput" type="text"
+        placeholder="Tìm tên sách..." oninput="filterBooks(this.value)">
+      <button class="book-search-clear" id="bookSearchClear" onclick="clearBookSearch()">✕</button>
+    </div>
+
+    <div class="book-list" id="bookList"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- SEARCH -->
+    <div class="search-wrapper">
+      <div class="search-top">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="searchInput" type="text"
+            placeholder="Tìm câu, đoạn hoặc từ khóa..." oninput="doSearch()">
+        </div>
+        <button class="search-btn" onclick="doSearch()">Tìm Kiếm</button>
+      </div>
+
+      <!-- OPTIONS -->
+      <div class="search-options">
+        <div class="opt-group">
+          <span class="opt-label">📖 Lọc theo sách</span>
+          <select class="opt-select" id="filterBook">
+            <option value="">Tất cả sách</option>
+            <optgroup label="── Cựu Ước ──">
+              <option value="Gen">Sáng Thế Ký</option>
+              <option value="Exo">Xuất Ê-díp-tô</option>
+              <option value="Psa">Thi Thiên</option>
+              <option value="Pro">Châm Ngôn</option>
+              <option value="Isa">Ê-sai</option>
+            </optgroup>
+            <optgroup label="── Tân Ước ──">
+              <option value="Mat">Ma-thi-ơ</option>
+              <option value="Jhn">Giăng</option>
+              <option value="Rom">Rô-ma</option>
+              <option value="Rev">Khải Huyền</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="opt-group">
+          <span class="opt-label">🏷️ Chủ đề</span>
+          <select class="opt-select" id="filterTopic">
+            <option value="">Tất cả chủ đề</option>
+            <option value="love">Tình yêu thương</option>
+            <option value="hope">Hy vọng</option>
+            <option value="faith">Đức tin</option>
+            <option value="peace">Bình an</option>
+            <option value="forgive">Tha thứ</option>
+            <option value="grace">Ân điển</option>
+            <option value="wisdom">Khôn ngoan</option>
+            <option value="courage">Can đảm</option>
+            <option value="prayer">Cầu nguyện</option>
+            <option value="salvation">Cứu rỗi</option>
+          </select>
+        </div>
+
+        <div class="opt-group">
+          <span class="opt-label">📜 Phiên bản</span>
+          <select class="opt-select" id="filterVersion">
+            <option value="TKVT">TKVT – Tiếng Việt 2010</option>
+            <option value="BD2011">BD2011 – Bản Dịch 2011</option>
+            <option value="NIV">NIV – New Intl Version</option>
+            <option value="KJV">KJV – King James</option>
+            <option value="ESV">ESV – English Standard</option>
+            <option value="NLT">NLT – New Living</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- MATCH TYPE + TESTAMENT QUICK -->
+      <div class="search-options-row">
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:var(--text-dim);">Kiểu tìm:</span>
+        <span class="match-pill active" onclick="setMatch('contains',this)">Chứa từ</span>
+        <span class="match-pill" onclick="setMatch('exact',this)">Chính xác</span>
+        <span class="match-pill" onclick="setMatch('similar',this)">Tương tự</span>
+        <span style="margin-left:8px;font-family:'Inter',sans-serif;font-size:11px;color:var(--text-dim);">Phạm vi:</span>
+        <span class="match-pill active" onclick="setScope('all',this)">Tất cả</span>
+        <span class="match-pill" onclick="setScope('old',this)">Cựu Ước</span>
+        <span class="match-pill" onclick="setScope('new',this)">Tân Ước</span>
+      </div>
+    </div>
+
+    <!-- CHAPTER HEADER -->
+    <div class="chapter-header">
+      <div>
+        <div class="chapter-title" id="chapterTitle">Giăng 3</div>
+        <div class="chapter-sub" id="chapterSub">TKVT · Tân Ước · Chương 3 / 21</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="version-tag" id="versionBadge" onclick="cycleVersion()">TKVT ▾</button>
+        <div class="chapter-nav">
+          <button class="nav-btn" onclick="changeChapter(-1)">‹</button>
+          <button class="nav-btn" onclick="changeChapter(1)">›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAPTER SELECTOR -->
+    <div class="chapter-grid-wrap">
+      <div class="chapter-grid-label">
+        <span>Chọn chương</span>
+        <span class="chapter-count-badge" id="chapterCountBadge">21 chương</span>
+      </div>
+      <div class="chapter-grid-scroll">
+        <div class="chapter-grid" id="chapterGrid"></div>
+      </div>
+    </div>
+
+    <!-- VERSES -->
+    <div class="verses" id="versesContainer"></div>
+
+  </main>
+
+  <!-- SIDEBAR RIGHT -->
+  <aside class="sidebar-right">
+
+    <!-- Verse of the Day -->
+    <div class="widget votd">
+      <div class="widget-title">Câu Hôm Nay</div>
+      <div class="votd-verse">"Vì Đức Chúa Trời yêu thương thế gian đến nỗi đã ban Con một của Ngài..."</div>
+      <div class="votd-ref">Giăng 3:16 · TKVT</div>
+      <div class="votd-share">
+        <button class="share-btn">📋 Sao chép</button>
+        <button class="share-btn">🖼️ Tạo ảnh</button>
+        <button class="share-btn">📤 Chia sẻ</button>
+      </div>
+    </div>
+
+    <!-- Bookmarks -->
+    <div class="widget">
+      <div class="widget-title">Đánh Dấu</div>
+      <div class="bookmark-item">
+        <div class="bk-ref">Giăng 3:16</div>
+        <div class="bk-text">Vì Đức Chúa Trời yêu thương thế gian đến nỗi đã ban Con một của Ngài...</div>
+      </div>
+      <div class="bookmark-item">
+        <div class="bk-ref">Thi Thiên 23:1</div>
+        <div class="bk-text">Đức Giê-hô-va là Đấng chăn giữ tôi; tôi sẽ chẳng thiếu thốn gì.</div>
+      </div>
+      <div class="bookmark-item">
+        <div class="bk-ref">Phi-líp 4:13</div>
+        <div class="bk-text">Tôi làm được mọi sự nhờ Đấng ban thêm sức cho tôi.</div>
+      </div>
+    </div>
+
+    <!-- Language Switcher -->
+    <div class="widget">
+      <div class="widget-title">Ngôn Ngữ</div>
+      <div class="lang-btn active"><span>🇻🇳 Tiếng Việt</span><span>✓</span></div>
+      <div class="lang-btn" onclick="switchLang(this)"><span>🇬🇧 English</span><span>›</span></div>
+      <div class="lang-btn" onclick="switchLang(this)"><span>🇫🇷 Français</span><span>›</span></div>
+      <div class="lang-btn" onclick="switchLang(this)"><span>🇰🇷 한국어</span><span>›</span></div>
+      <div class="lang-btn" onclick="switchLang(this)"><span>🇨🇳 中文</span><span>›</span></div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────
+const OLD_TESTAMENT = [
+  {name:"Sáng Thế Ký",abbr:"St",chapters:50},
+  {name:"Xuất Ê-díp-tô",abbr:"Xt",chapters:40},
+  {name:"Lê-vi",abbr:"Lv",chapters:27},
+  {name:"Dân Số",abbr:"DS",chapters:36},
+  {name:"Phục Truyền",abbr:"PT",chapters:34},
+  {name:"Giô-suê",abbr:"Gs",chapters:24},
+  {name:"Các Quan Xét",abbr:"QX",chapters:21},
+  {name:"Ru-tơ",abbr:"Rt",chapters:4},
+  {name:"1 Sa-mu-ên",abbr:"1S",chapters:31},
+  {name:"2 Sa-mu-ên",abbr:"2S",chapters:24},
+  {name:"Thi Thiên",abbr:"Thi",chapters:150},
+  {name:"Châm Ngôn",abbr:"CN",chapters:31},
+  {name:"Gióp",abbr:"Gióp",chapters:42},
+  {name:"Ê-sai",abbr:"Es",chapters:66},
+  {name:"Giê-rê-mi",abbr:"Gr",chapters:52},
+  {name:"Đa-ni-ên",abbr:"Đn",chapters:12},
+];
+
+const NEW_TESTAMENT = [
+  {name:"Ma-thi-ơ",abbr:"Mt",chapters:28},
+  {name:"Mác",abbr:"Mc",chapters:16},
+  {name:"Lu-ca",abbr:"Lc",chapters:24},
+  {name:"Giăng",abbr:"Gi",chapters:21},
+  {name:"Công Vụ",abbr:"CV",chapters:28},
+  {name:"Rô-ma",abbr:"Rm",chapters:16},
+  {name:"1 Cô-rinh-tô",abbr:"1Cr",chapters:16},
+  {name:"Ga-la-ti",abbr:"Gl",chapters:6},
+  {name:"Ê-phê-sô",abbr:"Ep",chapters:6},
+  {name:"Phi-líp",abbr:"Phi",chapters:4},
+  {name:"1 Tê-sa-lô-ni-ca",abbr:"1Tx",chapters:5},
+  {name:"2 Ti-mô-thê",abbr:"2Tm",chapters:4},
+  {name:"Hê-bơ-rơ",abbr:"Hb",chapters:13},
+  {name:"Gia-cơ",abbr:"Gc",chapters:5},
+  {name:"1 Phi-e-rơ",abbr:"1Pr",chapters:5},
+  {name:"Khải Huyền",abbr:"KH",chapters:22},
+];
+
+const VERSES = {
+  "Giăng": {
+    3: [
+      {num:1, text:"Trong vòng người Pha-ri-si có một người tên là Ni-cô-đem, là một nhà lãnh đạo của người Giu-đa."},
+      {num:2, text:"Người nầy đến gặp Đức Chúa Jêsus ban đêm, mà nói rằng: Thưa thầy, chúng tôi biết thầy là giáo sư đến từ Đức Chúa Trời; vì những phép lạ thầy đã làm đó, không ai làm được, nếu Đức Chúa Trời chẳng ở cùng."},
+      {num:3, text:"Đức Chúa Jêsus cất tiếng trả lời rằng: Quả thật, quả thật, ta nói cùng ngươi, nếu một người chẳng sanh lại, thì không thể thấy được nước Đức Chúa Trời."},
+      {num:4, text:"Ni-cô-đem thưa rằng: Người đã già thì sanh lại làm sao được? Có thể nào trở vào lòng mẹ mà sanh lần thứ hai sao?"},
+      {num:5, text:"Đức Chúa Jêsus đáp: Quả thật, quả thật, ta nói cùng ngươi, nếu một người chẳng nhờ nước và Thánh Linh mà sanh, thì không thể vào nước Đức Chúa Trời."},
+      {num:6, text:"Hễ chi sanh bởi xác thịt là xác thịt; hễ chi sanh bởi Thánh Linh là thần."},
+      {num:7, text:"Chớ lấy làm lạ về điều ta đã nói với ngươi: Các ngươi phải sanh lại."},
+      {num:8, text:"Gió muốn thổi đâu thì thổi, ngươi nghe tiếng động; nhưng chẳng biết gió đến từ đâu và cũng không biết đi đâu. Hễ người nào sanh bởi Thánh Linh thì cũng như vậy."},
+      {num:9, text:"Ni-cô-đem lại hỏi: Điều đó có thể xảy ra thế nào được?"},
+      {num:10, text:"Đức Chúa Jêsus đáp rằng: Ngươi là giáo sư của Y-sơ-ra-ên, mà không hiểu những điều đó sao?"},
+      {num:11, text:"Quả thật, quả thật, ta nói cùng ngươi, chúng ta nói điều chúng ta biết, và làm chứng điều chúng ta đã thấy; nhưng các ngươi không nhận lấy lời chứng của chúng ta."},
+      {num:12, text:"Ta đã nói với các ngươi những điều thuộc về thế gian mà các ngươi chẳng tin, huống chi ta nói những điều thuộc về thiên đàng, thì các ngươi tin sao được?"},
+      {num:13, text:"Chưa hề có ai lên trời, trừ ra Đấng từ trời xuống, ấy là Con người vốn ở trên trời."},
+      {num:14, text:"Xưa Môi-se treo con rắn lên nơi đồng vắng thể nào, Con người cũng phải bị treo lên dường ấy,"},
+      {num:15, text:"hầu cho hễ ai tin đến Ngài đều được sự sống đời đời."},
+      {num:16, text:"Vì Đức Chúa Trời yêu thương thế gian đến nỗi đã ban Con một của Ngài, hầu cho hễ ai tin Con ấy không bị hư mất mà được sự sống đời đời."},
+      {num:17, text:"Vả, Đức Chúa Trời đã sai Con Ngài xuống thế gian, chẳng phải để đoán xét thế gian đâu, nhưng hầu cho thế gian nhờ Con ấy mà được cứu."},
+      {num:18, text:"Ai tin Con ấy thì chẳng bị đoán xét đâu; ai không tin thì đã bị đoán xét rồi, vì không tin đến danh Con một Đức Chúa Trời."},
+      {num:19, text:"Vả, sự đoán xét đó là thế nầy: sự sáng đã đến thế gian, mà người ta ưa sự tối tăm hơn sự sáng, vì việc làm của họ là xấu xa."},
+      {num:20, text:"Bởi vì phàm ai làm ác thì ghét sự sáng, không đến cùng sự sáng, e rằng công việc mình phải trách."},
+      {num:21, text:"Nhưng kẻ làm theo lẽ thật thì đến cùng sự sáng, hầu cho công việc của mình được tỏ ra, vì đã làm trong Đức Chúa Trời."},
+    ]
+  }
+};
+
+// ─── STATE ──────────────────────────────────────────────────
+let state = {
+  testament: 'old',
+  book: 'Giăng',
+  chapter: 3,
+  version: 'TKVT',
+  matchType: 'contains',
+  scope: 'all',
+  bookmarks: new Set([16]),
+  highlights: new Set([3,16]),
+};
+
+// ─── RENDER BOOKS ────────────────────────────────────────────
+function renderBooks(filter = '') {
+  const list = document.getElementById('bookList');
+  const isNew = state.testament === 'new';
+  const books = isNew ? NEW_TESTAMENT : OLD_TESTAMENT;
+  const label = isNew ? 'Tân Ước' : 'Cựu Ước';
+
+  const q = filter.toLowerCase().trim();
+  const filtered = q
+    ? [...OLD_TESTAMENT, ...NEW_TESTAMENT].filter(b =>
+        b.name.toLowerCase().includes(q) || b.abbr.toLowerCase().includes(q))
+    : books;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="book-no-result">Không tìm thấy sách nào</div>`;
+    return;
+  }
+
+  // If searching across both testaments, group by testament
+  if (q) {
+    const oldMatch = OLD_TESTAMENT.filter(b => b.name.toLowerCase().includes(q) || b.abbr.toLowerCase().includes(q));
+    const newMatch = NEW_TESTAMENT.filter(b => b.name.toLowerCase().includes(q) || b.abbr.toLowerCase().includes(q));
+    let html = '';
+    if (oldMatch.length) {
+      html += `<div class="book-group-label">Cựu Ước</div>`;
+      html += oldMatch.map(b => bookItemHTML(b)).join('');
+    }
+    if (newMatch.length) {
+      html += `<div class="book-group-label">Tân Ước</div>`;
+      html += newMatch.map(b => bookItemHTML(b)).join('');
+    }
+    list.innerHTML = html;
+  } else {
+    list.innerHTML = `<div class="book-group-label">${label}</div>` +
+      filtered.map(b => bookItemHTML(b)).join('');
+  }
+}
+
+function bookItemHTML(b) {
+  return `<div class="book-item ${b.name===state.book?'active':''}" onclick="selectBook('${b.name}')">
+    <span>${b.name}</span>
+    <span class="book-abbr">${b.abbr}</span>
+  </div>`;
+}
+
+function filterBooks(val) {
+  const clearBtn = document.getElementById('bookSearchClear');
+  if (val.trim()) clearBtn.classList.add('visible');
+  else clearBtn.classList.remove('visible');
+  renderBooks(val);
+}
+
+function clearBookSearch() {
+  const inp = document.getElementById('bookSearchInput');
+  inp.value = '';
+  document.getElementById('bookSearchClear').classList.remove('visible');
+  renderBooks('');
+  inp.focus();
+}
+
+function selectBook(name) {
+  state.book = name;
+  state.chapter = 1;
+  // update testament toggle to match selected book
+  const isNew = NEW_TESTAMENT.find(b => b.name === name);
+  state.testament = isNew ? 'new' : 'old';
+  document.querySelectorAll('.testament-btn').forEach((b,i) => {
+    b.classList.toggle('active', isNew ? i===1 : i===0);
+  });
+  // clear book search
+  const inp = document.getElementById('bookSearchInput');
+  if (inp) { inp.value = ''; document.getElementById('bookSearchClear').classList.remove('visible'); }
+  renderBooks();
+  renderChapterGrid();
+  renderVerses();
+  updateHeader();
+}
+
+function toggleTestament(t, btn) {
+  state.testament = t;
+  document.querySelectorAll('.testament-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // clear search when switching testament
+  const inp = document.getElementById('bookSearchInput');
+  if (inp) { inp.value = ''; document.getElementById('bookSearchClear').classList.remove('visible'); }
+  renderBooks();
+}
+
+// ─── RENDER CHAPTERS ─────────────────────────────────────────
+function renderChapterGrid() {
+  const all = [...OLD_TESTAMENT, ...NEW_TESTAMENT];
+  const book = all.find(b=>b.name===state.book) || {chapters:21};
+  const grid = document.getElementById('chapterGrid');
+  grid.innerHTML = Array.from({length:book.chapters},(_,i)=>i+1).map(n=>
+    `<button class="ch-btn ${n===state.chapter?'active':''}" onclick="selectChapter(${n})">${n}</button>`
+  ).join('');
+}
+
+function selectChapter(n) {
+  state.chapter = n;
+  renderChapterGrid();
+  renderVerses();
+  updateHeader();
+}
+
+function changeChapter(d) {
+  const all = [...OLD_TESTAMENT,...NEW_TESTAMENT];
+  const book = all.find(b=>b.name===state.book)||{chapters:21};
+  state.chapter = Math.max(1, Math.min(book.chapters, state.chapter + d));
+  renderChapterGrid();
+  renderVerses();
+  updateHeader();
+}
+
+// ─── RENDER VERSES ───────────────────────────────────────────
+function renderVerses() {
+  const container = document.getElementById('versesContainer');
+  const verses = (VERSES[state.book]||{})[state.chapter] || generateVerses();
+
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  let html = '';
+  if (state.chapter === 3 && state.book === 'Giăng') {
+    html += `<div class="section-heading">Cuộc Trò Chuyện Với Ni-cô-đem</div>`;
+  }
+
+  verses.forEach(v => {
+    const bm = state.bookmarks.has(v.num);
+    const hl = state.highlights.has(v.num);
+    let text = v.text;
+    if (q.length > 1) {
+      const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+      text = text.replace(regex, '<span class="highlight">$1</span>');
+    }
+    html += `
+      <div class="verse-row ${hl?'highlighted':''} ${bm?'bookmarked':''}" id="v${v.num}">
+        <span class="verse-num">${v.num}</span>
+        <span class="verse-text">${text}</span>
+        <div class="verse-actions">
+          <button class="va-btn" title="Highlight" onclick="toggleHighlight(${v.num},event)">✦</button>
+          <button class="va-btn" title="Bookmark" onclick="toggleBookmark(${v.num},event)">🔖</button>
+          <button class="va-btn" title="Sao chép" onclick="copyVerse(${v.num},event)">📋</button>
+          <button class="va-btn" title="Chia sẻ" onclick="showToast('Đã sao chép liên kết!')">📤</button>
+        </div>
+      </div>`;
+    if (v.num === 13 && state.book==='Giăng' && state.chapter===3) {
+      html += `<div class="section-heading">Con Người Và Đức Tin</div>`;
+    }
+  });
+
+  container.innerHTML = html;
+}
+
+function generateVerses() {
+  return Array.from({length:15},(_,i)=>({
+    num:i+1,
+    text:`[Câu ${i+1}] Nội dung của ${state.book} chương ${state.chapter} — Phiên bản ${state.version}. Đây là bản demo.`
+  }));
+}
+
+function updateHeader() {
+  document.getElementById('chapterTitle').textContent = `${state.book} ${state.chapter}`;
+  const all = [...OLD_TESTAMENT,...NEW_TESTAMENT];
+  const book = all.find(b=>b.name===state.book)||{chapters:21};
+  const t = OLD_TESTAMENT.find(b=>b.name===state.book) ? 'Cựu Ước' : 'Tân Ước';
+  document.getElementById('chapterSub').textContent = `${state.version} · ${t} · Chương ${state.chapter} / ${book.chapters}`;
+  document.getElementById('versionBadge').textContent = `${state.version} ▾`;
+}
+
+// ─── INTERACTIONS ────────────────────────────────────────────
+function toggleHighlight(num, e) {
+  e.stopPropagation();
+  if (state.highlights.has(num)) state.highlights.delete(num);
+  else state.highlights.add(num);
+  renderVerses();
+  showToast(state.highlights.has(num) ? '✦ Đã tô màu câu ' + num : 'Đã bỏ tô màu');
+}
+
+function toggleBookmark(num, e) {
+  e.stopPropagation();
+  if (state.bookmarks.has(num)) state.bookmarks.delete(num);
+  else state.bookmarks.add(num);
+  renderVerses();
+  showToast(state.bookmarks.has(num) ? '🔖 Đã đánh dấu câu ' + num : 'Đã xóa đánh dấu');
+}
+
+function copyVerse(num, e) {
+  e.stopPropagation();
+  const verses = (VERSES[state.book]||{})[state.chapter]||[];
+  const v = verses.find(x=>x.num===num);
+  if (v) navigator.clipboard?.writeText(`"${v.text}" — ${state.book} ${state.chapter}:${num} (${state.version})`);
+  showToast('📋 Đã sao chép câu ' + num);
+}
+
+function doSearch() {
+  renderVerses();
+}
+
+function setMatch(type, el) {
+  state.matchType = type;
+  document.querySelectorAll('.opt-match .match-pill, .search-options-row .match-pill').forEach(p=>{
+    if(['contains','exact','similar'].includes(p.onclick?.toString().match(/'(\w+)'/)?.[1])) {}
+  });
+  // just update visual
+  el.closest('.search-options-row').querySelectorAll('.match-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Kiểu tìm: ' + {contains:'Chứa từ',exact:'Chính xác',similar:'Tương tự'}[type]);
+}
+
+function setScope(s, el) {
+  state.scope = s;
+  const row = el.parentElement;
+  // find scope pills (after the "Phạm vi:" label)
+  const pills = [...row.querySelectorAll('.match-pill')].filter(p=>
+    ['all','old','new'].some(x=>p.getAttribute('onclick')?.includes(`'${x}'`))
+  );
+  pills.forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Phạm vi: ' + {all:'Tất cả',old:'Cựu Ước',new:'Tân Ước'}[s]);
+}
+
+const VERSIONS = ['TKVT','BD2011','NIV','KJV','ESV','NLT'];
+function cycleVersion() {
+  const idx = VERSIONS.indexOf(state.version);
+  state.version = VERSIONS[(idx+1) % VERSIONS.length];
+  updateHeader();
+  renderVerses();
+  showToast('Phiên bản: ' + state.version);
+}
+
+function switchLang(el) {
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Đã chuyển ngôn ngữ');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+renderBooks();
+renderChapterGrid();
+renderVerses();
+updateHeader();
+// default to new testament view for Giăng
+state.testament = 'new';
+document.querySelectorAll('.testament-btn')[1].classList.add('active');
+document.querySelectorAll('.testament-btn')[0].classList.remove('active');
+renderBooks();
+</script>
+</body>
+</html>
