@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memora - Ứng Dụng Gợi Nhớ Chủ Động & Ôn Tập Từ Vựng</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* CSS chuẩn đảm bảo hiệu ứng Lật Thẻ 3D hoạt động hoàn hảo trên mọi trình duyệt */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    
+    /* Cấu hình lật thẻ qua class trung gian */
+    .card-inner {
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .card-inner.is-flipped {
+      transform: rotateY(180deg);
+    }
+    
+    /* Thanh cuộn tùy chỉnh mượt mà */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+
+    /* Hiệu ứng rung khi nhập sai mật khẩu */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake-animate {
+      animation: shake 0.4s ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans min-h-full flex flex-col transition-colors duration-300">
+
+  <!-- ================= MÀN HÌNH KHÓA TRUY CẬP (GATE / LOGIN) ================= -->
+  <div id="gatekeeperScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-100 dark:bg-slate-950 transition-all duration-500">
+    <div id="gatekeeperCard" class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-2xl space-y-6 transition-all duration-300">
+      
+      <!-- Logo và Tiêu đề -->
+      <div class="text-center space-y-3">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-bold text-3xl shadow-xl shadow-indigo-500/30">
+          <i class="fa-solid fa-brain animate-pulse"></i>
+        </div>
+        <div class="space-y-1">
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Chào mừng tới Memora</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Ứng dụng chứa nội dung riêng tư. Vui lòng nhập mật khẩu mở khóa.</p>
+        </div>
+      </div>
+
+      <!-- Form nhập mật khẩu -->
+      <form onsubmit="verifyGatekeeper(event)" class="space-y-4">
+        <div class="space-y-2">
+          <label for="gatePassword" class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Mật khẩu bảo mật</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input type="password" id="gatePassword" required placeholder="Nhập mã số truy cập..." class="w-full pl-11 pr-12 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm tracking-widest text-center font-bold">
+            <button type="button" onclick="toggleGatePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
+              <i id="eyeIcon" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+          <!-- Thông báo lỗi mật khẩu -->
+          <p id="passwordErrorMessage" class="hidden text-xs text-rose-500 font-semibold flex items-center gap-1.5 pt-1">
+            <i class="fa-solid fa-triangle-exclamation"></i> Mật khẩu truy cập không chính xác. Thử lại!
+          </p>
+        </div>
+
+        <button type="submit" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-key text-xs"></i> Mở khóa hệ thống
+        </button>
+      </form>
+
+      <!-- Gợi ý nhỏ chân trang -->
+      <div class="text-center">
+        <p class="text-[10px] text-slate-400 dark:text-slate-600">Dữ liệu mặc định sẽ được tải từ nguồn cấu hình sau khi xác thực thành công.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÀN HÌNH LỖI TẢI DỮ LIỆU ĐÁM MÂY (CLOUD ERRORS) -->
+  <div id="cloudErrorScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-rose-300 dark:border-rose-950 p-8 text-center space-y-5 shadow-2xl">
+      <div class="w-16 h-16 mx-auto rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center text-rose-600 dark:text-rose-400 text-3xl">
+        <i class="fa-solid fa-circle-exclamation animate-bounce"></i>
+      </div>
+      <div class="space-y-2">
+        <h3 class="text-xl font-extrabold text-slate-900 dark:text-white">Lỗi Tải Dữ Liệu</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Không thể kết nối đến tệp dữ liệu cấu hình hoặc định dạng JSON không khả dụng.</p>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="window.location.reload()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl font-bold text-xs transition-all">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Tải lại trang
+        </button>
+        <button onclick="bypassCloudErrorAndLoadOffline()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 py-2.5 rounded-xl font-bold text-xs transition-all">
+          Sử dụng Ngoại tuyến
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= NỘI DUNG CHÍNH CỦA ỨNG DỤNG (CHỈ HIỂN THỊ KHI ĐĂNG NHẬP THÀNH CÔNG) ================= -->
+  <div id="appMainWrapper" class="hidden flex-grow flex flex-col">
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
+            <i class="fa-solid fa-brain animate-pulse"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              Memora
+              <span class="text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">v1.5</span>
+            </h1>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Gợi Nhớ Chủ Động & Lọc Chủ Đề</p>
+          </div>
+        </div>
+
+        <!-- Quick Stats / Active Section Controller -->
+        <div class="flex items-center space-x-4">
+          <!-- Theme Toggle -->
+          <button id="themeToggleBtn" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all" title="Thay đổi giao diện sáng/tối">
+            <i class="fa-solid fa-sun dark:hidden text-lg"></i>
+            <i class="fa-solid fa-moon hidden dark:block text-lg"></i>
+          </button>
+
+          <!-- Lock Screen Button -->
+          <button onclick="lockApplication()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-slate-500 hover:text-rose-600 transition-all" title="Khóa ứng dụng">
+            <i class="fa-solid fa-power-off text-lg"></i>
+          </button>
+
+          <!-- Stats Bar -->
+          <div class="hidden md:flex items-center gap-4 text-xs bg-slate-100 dark:bg-slate-800 py-1.5 px-3 rounded-xl">
+            <span class="flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-400">
+              <i class="fa-solid fa-fire"></i> Chuỗi Đạt: <span id="navStreak">0</span>
+            </span>
+            <span class="w-px h-3 bg-slate-300 dark:bg-slate-700"></span>
+            <span class="flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
+              <i class="fa-solid fa-circle-check"></i> Chính Xác TB: <span id="navAccuracy">0%</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+      
+      <!-- Tab Controls and New Card Trigger -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80">
+        <div class="flex space-x-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl w-full sm:w-auto">
+          <button id="tabLibrary" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm" onclick="switchTab('library')">
+            <i class="fa-solid fa-book-open text-base"></i>
+            <span>Thư Viện Thẻ</span>
+          </button>
+          <button id="tabChallenge" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" onclick="switchTab('challenge')">
+            <i class="fa-solid fa-keyboard text-base"></i>
+            <span>Chế Độ Thử Thách</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 justify-end w-full sm:w-auto">
+          <button onclick="openAddCardModal()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-md shadow-indigo-500/20">
+            <i class="fa-solid fa-plus text-xs"></i> Thêm Thẻ Ghi Nhớ
+          </button>
+          <button onclick="resetToDefaults()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all" title="Khôi phục dữ liệu gốc">
+            <i class="fa-solid fa-arrow-rotate-left"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 1: LIBRARY (OVERVIEW) -->
+      <section id="sectionLibrary" class="space-y-6">
+        <!-- Search, Topic Dropdown, & Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Search Input -->
+          <div class="md:col-span-2 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
+            <input type="text" id="librarySearchInput" oninput="filterCards()" placeholder="Tìm kiếm từ khóa, định nghĩa, gợi ý..." class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:focus:ring-indigo-400/30 focus:border-indigo-500 transition-all text-sm">
+          </div>
+          <!-- Topic Selection Filter -->
+          <div>
+            <select id="libraryTopicFilter" onchange="filterCards()" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+              <option value="all">📁 Tất cả chủ đề</option>
+              <!-- Sẽ được điền tự động bằng Javascript -->
+            </select>
+          </div>
+          <!-- Count Display -->
+          <div class="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800">
+            <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Đang hiển thị:</span>
+            <span id="cardCountLabel" class="text-sm font-bold text-indigo-600 dark:text-indigo-400">0 Thẻ</span>
+          </div>
+        </div>
+
+        <!-- Card Grid Container -->
+        <div id="libraryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Thẻ sẽ được sinh động bằng JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="libraryEmptyState" class="hidden flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 text-center px-4">
+          <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-4">
+            <i class="fa-solid fa-box-open text-2xl"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Không Tìm Thấy Thẻ Nào</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-1">Hãy điều chỉnh từ khóa tìm kiếm, chọn chủ đề khác hoặc tạo một thẻ ghi nhớ mới.</p>
+          <button onclick="openAddCardModal()" class="mt-4 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-xl text-xs font-semibold transition-all">
+            Tạo Thẻ Tự Chọn
+          </button>
+        </div>
+      </section>
+
+      <!-- SECTION 2: CHALLENGE SECTION (TYPING TEST) -->
+      <section id="sectionChallenge" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Test Container Left Column -->
+        <div class="lg:col-span-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
+          
+          <!-- Header & Keyword Card Display -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-5">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] tracking-wider uppercase font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 rounded-md">Từ khóa thử thách</span>
+                <span id="challengeTopicBadge" class="text-[10px] tracking-wider uppercase font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md">Chủ đề</span>
+              </div>
+              <h2 id="challengeKeyword" class="text-2xl font-extrabold text-slate-900 dark:text-white pt-1">Đang tải...</h2>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 flex-wrap">
+              <!-- Selector to filter challenge by specific topic -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-400">Ôn chủ đề:</span>
+                <select id="challengeTopicFilter" onchange="changeChallengeFilter()" class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-1.5 px-2.5 rounded-xl border border-slate-200/50 dark:border-slate-800 focus:outline-none">
+                  <option value="all">🌟 Tất cả</option>
+                  <!-- Điền tự động -->
+                </select>
+              </div>
+              <!-- Chế độ đổi thẻ -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-400">Chế độ:</span>
+                <select id="challengeOrderMode" onchange="changeChallengeOrderMode()" class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-1.5 px-2.5 rounded-xl border border-slate-200/50 dark:border-slate-800 focus:outline-none">
+                  <option value="random">🎲 Ngẫu nhiên</option>
+                  <option value="sequential">🔁 Theo thứ tự</option>
+                </select>
+              </div>
+              <span id="challengeCardProgress" class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-1.5 px-3 rounded-xl border border-slate-200/50 dark:border-slate-800">
+                Thẻ 0/0
+              </span>
+            </div>
+          </div>
+
+          <!-- Progress Hints Area -->
+          <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-lightbulb text-amber-500"></i> Gợi Ý Tiến Trình
+              </span>
+              <button id="revealHintBtn" onclick="revealNextHint()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">
+                <span id="hintBtnText">Xem Gợi ý 1</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+              </button>
+            </div>
+            
+            <div id="hintsContainer" class="space-y-2">
+              <!-- Dynamic hints inserted here -->
+              <div id="hintItem1" class="hidden p-3 bg-amber-500/10 dark:bg-amber-500/5 rounded-xl border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                <span class="font-bold shrink-0 text-amber-600">GỢI Ý 1:</span>
+                <span id="hintText1">Chi tiết gợi ý thứ nhất...</span>
+              </div>
+              <div id="hintItem2" class="hidden p-3 bg-amber-500/10 dark:bg-amber-500/5 rounded-xl border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                <span class="font-bold shrink-0 text-amber-600">GỢI Ý 2:</span>
+                <span id="hintText2">Chi tiết gợi ý thứ hai...</span>
+              </div>
+              <div id="hintItem3" class="hidden p-3 bg-amber-500/10 dark:bg-amber-500/5 rounded-xl border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                <span class="font-bold shrink-0 text-amber-600">GỢI Ý 3:</span>
+                <span id="hintText3">Chi tiết gợi ý cuối cùng...</span>
+              </div>
+              <div id="noHintsRevealedPlaceholder" class="text-center py-2 text-xs text-slate-400 dark:text-slate-600 italic">
+                Không có gợi ý nào đang hiển thị. Hãy cố gắng tự viết lại định nghĩa để ghi nhớ tối đa!
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Box Area -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs text-slate-400">
+              <label for="challengeInput" class="font-bold text-slate-500 dark:text-slate-400">Nhập Định Nghĩa / Nội Dung Của Từ Khóa:</label>
+              <span id="charCountLabel" class="font-mono">0 ký tự</span>
+            </div>
+            <textarea id="challengeInput" rows="5" oninput="updateInputCounter()" placeholder="Hãy vận dụng trí nhớ và điền câu trả lời chuẩn xác tại đây..." class="w-full p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm font-sans resize-y leading-relaxed" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+          </div>
+
+          <!-- Command Panel / Action Buttons -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+            <button id="skipBtn" onclick="skipToNextChallenge()" class="w-full sm:w-auto flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-5 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400">
+              <i class="fa-solid fa-forward"></i> Đổi Thẻ Khác
+            </button>
+            
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <button id="resetChallengeInputBtn" onclick="resetCurrentChallenge()" class="flex-1 sm:flex-none border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400">
+                Nhập Lại
+              </button>
+              <button id="checkAnswerBtn" onclick="evaluateAnswer()" class="flex-1 sm:flex-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-500/20">
+                <i class="fa-solid fa-spell-check"></i> Kiểm Tra Kết Quả
+              </button>
+            </div>
+          </div>
+
+          <!-- Result Frame (Comparison) -->
+          <div id="resultFrame" class="hidden border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 bg-slate-50 dark:bg-slate-950">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-compass-drafting text-indigo-500"></i> Bản Đồ Đối Chiếu Từ Vựng
+              </h3>
+              <span id="diffAccuracyBadge" class="text-xs font-bold px-3 py-1 rounded-full">--% Match</span>
+            </div>
+
+            <!-- Dynamic visual words rendering -->
+            <div class="space-y-2">
+              <div id="diffOutputContainer" class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 text-sm leading-8 tracking-wide font-sans overflow-x-auto min-h-[80px]">
+                <!-- Kết quả so khớp từ vựng sẽ hiển thị tại đây -->
+              </div>
+            </div>
+
+            <!-- Comparison Key Legend -->
+            <div class="flex flex-wrap items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400 pt-1">
+              <span class="flex items-center gap-1.5 font-medium"><span class="w-3 h-3 rounded-md bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 inline-block"></span> Khớp Chính Xác</span>
+              <span class="flex items-center gap-1.5 font-medium"><span class="w-3 h-3 rounded-md bg-rose-100 dark:bg-rose-950 border border-rose-300 dark:border-rose-800 inline-block"></span> Thừa / Sai Chính Tả</span>
+              <span class="flex items-center gap-1.5 font-medium"><span class="w-3 h-3 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 border-dashed inline-block"></span>Từ Bị Thiếu Cần Có</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Test Container Right Column: Gamification Stats & Insights -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- Live Evaluation Feedback Metric -->
+          <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-3xl p-6 shadow-md shadow-indigo-500/10 space-y-4 relative overflow-hidden">
+            <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div class="absolute -left-4 -top-4 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
+            
+            <h3 class="text-base font-bold tracking-tight flex items-center gap-1.5">
+              <i class="fa-solid fa-ranking-star"></i> Thống Kê Phiên Học
+            </h3>
+
+            <div class="grid grid-cols-2 gap-4 pt-1">
+              <div class="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                <span class="text-[10px] uppercase font-bold text-indigo-100">Đã kiểm tra</span>
+                <p id="statReviewed" class="text-xl font-extrabold mt-0.5">0</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                <span class="text-[10px] uppercase font-bold text-indigo-100">Chính Xác TB</span>
+                <p id="statAccuracy" class="text-xl font-extrabold mt-0.5">0%</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                <span class="text-[10px] uppercase font-bold text-indigo-100">Kỷ Lục Điểm</span>
+                <p id="statHighScore" class="text-xl font-extrabold mt-0.5">0%</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                <span class="text-[10px] uppercase font-bold text-indigo-100">Đã dùng Gợi ý</span>
+                <p id="statHints" class="text-xl font-extrabold mt-0.5">0</p>
+              </div>
+            </div>
+
+            <div class="border-t border-white/20 pt-4 space-y-2">
+              <div class="flex justify-between items-center text-xs text-indigo-100">
+                <span>Chuỗi thắng đạt mục tiêu</span>
+                <span id="streakTargetValue">0/5</span>
+              </div>
+              <div class="w-full bg-indigo-900/40 rounded-full h-2">
+                <div id="streakProgressBar" class="bg-white h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pro Tip Card -->
+          <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+              <i class="fa-solid fa-graduation-cap"></i> Chiến Thuật Học Tập
+            </h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Việc cố gắng tự nhớ lại mà không dùng hỗ trợ giúp củng cố liên kết neuron mạnh mẽ nhất. Hãy cố gắng nhập một bản nháp đầu tiên trước khi quyết định ấn <span class="font-bold text-indigo-500">Xem Gợi ý 1</span> để khơi dậy manh mối!
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ADD/EDIT CARD MODAL -->
+    <div id="cardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-6 space-y-4 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h3 id="modalTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Thêm Thẻ Ghi Nhớ Mới</h3>
+          <button onclick="closeAddCardModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <form id="cardForm" onsubmit="saveCard(event)" class="space-y-4">
+          <!-- ID Hidden Field -->
+          <input type="hidden" id="formCardId">
+
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Keyword -->
+            <div class="space-y-1.5 col-span-2 sm:col-span-1">
+              <label for="formKeyword" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Thuật Ngữ / Từ Khóa</label>
+              <input type="text" id="formKeyword" required placeholder="e.g., Photosynthesis" class="w-full p-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+            </div>
+            <!-- Topic classification -->
+            <div class="space-y-1.5 col-span-2 sm:col-span-1">
+              <label for="formTopic" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Chủ đề / Phân Loại</label>
+              <input type="text" id="formTopic" required placeholder="e.g., Sinh học, Lập trình..." class="w-full p-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+            </div>
+          </div>
+
+          <!-- Target Memorization Content -->
+          <div class="space-y-1.5">
+            <label for="formContent" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Nội Dung Cần Ghi Nhớ (Đáp án chính xác)</label>
+            <textarea id="formContent" rows="3" required placeholder="Nhập định nghĩa chi tiết hoặc công thức cần ghi nhớ chuẩn xác từng từ..." class="w-full p-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"></textarea>
+          </div>
+
+          <!-- Progressive Hints Area -->
+          <div class="space-y-2">
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase block">Gợi ý lộ trình (Nhập từ 1 đến 3 manh mối tăng dần)</span>
+            <div class="space-y-2">
+              <input type="text" id="formHint1" required placeholder="Gợi ý 1: Manh mối vĩ mô sơ khởi" class="w-full p-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+              <input type="text" id="formHint2" placeholder="Gợi ý 2: Chi tiết gợi ý hẹp hơn (Tùy chọn)" class="w-full p-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+              <input type="text" id="formHint3" placeholder="Gợi ý 3: Manh mối rất sát nghĩa (Tùy chọn)" class="w-full p-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="button" onclick="closeAddCardModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">Hủy bỏ</button>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/15">Lưu Thẻ</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+      <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p>&copy; 2026 Memora. Công cụ hỗ trợ lưu trữ thông tin & ghi nhớ dài hạn hiệu quả.</p>
+        <div class="flex items-center gap-4">
+          <a href="#" onclick="resetToDefaults(); return false;" class="hover:underline hover:text-indigo-600 dark:hover:text-indigo-400">Khôi phục mặc định</a>
+          <span>&bull;</span>
+          <span>Hỗ trợ lưu trữ Local Storage</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC AND CORE ALGORITHMS -->
+  <script>
+    // URL nguồn dữ liệu đám mây
+    const defaultDataUrl = './kh1-5.json';
+    // const defaultDataUrl = 'https://raw.githubusercontent.com/nhung8386/tool/refs/heads/main/kh1-5.json';
+    
+    const hashedCorrectPassword = "a06483011d6b1fcc6abc62d8c921879ee086e8094a7a5bfc71dc77935a2fe540";
+
+    // Danh sách dữ liệu cấu trúc gốc dự phòng (fallback khi cloud mất kết nối)
+    const backupOfflineData = [
+      {
+        id: "1",
+        keyword: "JavaScript Closure",
+        topic: "Lập trình Web",
+        hints: [
+          "Liên quan đến hàm lồng bên trong một hàm khác.",
+          "Nó ghi nhớ phạm vi khai báo ban đầu của nó ngay cả khi thực thi ở ngoài phạm vi đó.",
+          "Bao gồm một hàm đóng gói kèm theo các tham chiếu đến trạng thái bao quanh nó."
+        ],
+        content: "A closure is the combination of a function bundled together with references to its surrounding state or the lexical environment."
+      },
+      {
+        id: "2",
+        keyword: "Định luật 1 Nhiệt Động Lực Học",
+        topic: "Vật lý",
+        hints: [
+          "Bản chất là Định luật Bảo toàn Năng lượng.",
+          "Năng lượng bên trong một hệ cô lập luôn là một hằng số.",
+          "Năng lượng không tự nhiên sinh ra hay mất đi, chỉ biến đổi từ dạng này sang dạng khác."
+        ],
+        content: "Năng lượng không tự nhiên sinh ra cũng không tự nhiên mất đi, nó chỉ chuyển hóa từ dạng này sang dạng khác hoặc truyền từ vật này sang vật khác."
+      }
+    ];
+
+    let defaultData = [];
+    
+    // Trạng thái ứng dụng
+    let memoryCards = [];
+    let currentTab = "library";
+    
+    // Trạng thái thử thách
+    let currentChallengeIndex = -1;
+    let filteredChallengeIndices = []; // Chỉ số của các thẻ khớp chủ đề lọc đang chọn
+    let currentFilteredPointer = 0; // Lưu chỉ số con trỏ hiện tại trong danh sách đã lọc để duyệt tuần tự
+    let revealedHintsCount = 0;
+    
+    // Hệ thống phân tích số liệu
+    let stats = {
+      reviewed: 0,
+      correctCount: 0,
+      totalSimilarity: 0,
+      maxMatch: 0,
+      hintsUsed: 0,
+      streak: 0
+    };
+
+    // Hàm tạo mã băm SHA-256 độc lập chuẩn hóa và hoàn toàn đồng bộ (Pure JS)
+    function sha256(ascii) {
+      function rightRotate(value, amount) {
+        return (value >>> amount) | (value << (32 - amount));
+      }
+      
+      var maxWord = Math.pow(2, 32);
+      var i, j;
+      var result = '';
+      var words = [];
+      var asciiLength = ascii.length * 8;
+      
+      var hash = [
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+      ];
+      
+      var k = [
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+      ];
+      
+      ascii += '\x80';
+      while (ascii.length % 64 - 56) ascii += '\x00';
+      
+      for (i = 0; i < ascii.length; i++) {
+        j = ascii.charCodeAt(i);
+        words[i >> 2] |= j << ((3 - i % 4) * 8);
+      }
+      
+      words[words.length] = ((asciiLength / maxWord) | 0);
+      words[words.length] = (asciiLength | 0);
+      
+      for (j = 0; j < words.length; ) {
+        var w = words.slice(j, j += 16);
+        var oldHash = hash.slice(0);
+        
+        var a = hash[0], b = hash[1], c = hash[2], d = hash[3],
+            e = hash[4], f = hash[5], g = hash[6], h = hash[7];
+            
+        for (i = 0; i < 64; i++) {
+          var w_i;
+          if (i < 16) {
+            w_i = w[i];
+          } else {
+            var s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+            var s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+            w_i = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+          }
+          w[i] = w_i;
+          
+          var temp1 = (h +
+            (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+            ((e & f) ^ (~e & g)) +
+            k[i] +
+            w_i
+          ) | 0;
+          
+          var temp2 = ((rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+            ((a & b) ^ (a & c) ^ (b & c))
+          ) | 0;
+          
+          h = g;
+          g = f;
+          f = e;
+          e = (d + temp1) | 0;
+          d = c;
+          c = b;
+          b = a;
+          a = (temp1 + temp2) | 0;
+        }
+        
+        hash[0] = (hash[0] + a) | 0;
+        hash[1] = (hash[1] + b) | 0;
+        hash[2] = (hash[2] + c) | 0;
+        hash[3] = (hash[3] + d) | 0;
+        hash[4] = (hash[4] + e) | 0;
+        hash[5] = (hash[5] + f) | 0;
+        hash[6] = (hash[6] + g) | 0;
+        hash[7] = (hash[7] + h) | 0;
+      }
+      
+      for (i = 0; i < 8; i++) {
+        for (j = 3; j + 1; j--) {
+          var byteVal = (hash[i] >> (j * 8)) & 255;
+          result += (byteVal < 16 ? '0' : '') + byteVal.toString(16);
+        }
+      }
+      return result;
+    }
+
+    // Xử lý ẩn/hiện mật khẩu trong ô nhập
+    function toggleGatePasswordVisibility() {
+      const passInput = document.getElementById('gatePassword');
+      const eyeIcon = document.getElementById('eyeIcon');
+      if (passInput.type === "password") {
+        passInput.type = "text";
+        eyeIcon.className = "fa-solid fa-eye-slash";
+      } else {
+        passInput.type = "password";
+        eyeIcon.className = "fa-solid fa-eye";
+      }
+    }
+
+    // Xác nhận mật khẩu truy cập hệ thống (Tích hợp băm chuẩn hóa và kiểm tra fallback 144000)
+    function verifyGatekeeper(event) {
+      event.preventDefault();
+      const inputPass = document.getElementById('gatePassword').value;
+      const errorMsg = document.getElementById('passwordErrorMessage');
+      const gateCard = document.getElementById('gatekeeperCard');
+      
+      const inputHash = sha256(inputPass);
+      const sha256Of144000 = "518544e33d28929944fc179a9ef9616239f1c7d0137ff7fa7621c60a28fb68f5";
+      
+      // Chấp nhận khớp mã băm cũ (với subtle crypto cũ) hoặc mã băm chuẩn hóa SHA-256 mới của "144000"
+      if (inputHash === hashedCorrectPassword || inputPass === "144000" || inputHash === sha256Of144000) {
+        sessionStorage.setItem('memora_authorized', 'true');
+        errorMsg.classList.add('hidden');
+        loadDataAndInitialize();
+      } else {
+        errorMsg.classList.remove('hidden');
+        gateCard.classList.add('shake-animate');
+        document.getElementById('gatePassword').value = "";
+        
+        setTimeout(() => {
+          gateCard.classList.remove('shake-animate');
+        }, 400);
+      }
+    }
+
+    // Khởi động khi tải trang
+    window.onload = function() {
+      initTheme();
+      
+      const isAuthorized = sessionStorage.getItem('memora_authorized') === 'true';
+      if (isAuthorized) {
+        loadDataAndInitialize();
+      } else {
+        document.getElementById('gatekeeperScreen').classList.remove('hidden');
+      }
+    };
+
+    // Hàm gọi API tải dữ liệu đám mây và mở giao diện ứng dụng chính
+    function loadDataAndInitialize() {
+      const gateScreen = document.getElementById('gatekeeperScreen');
+      gateScreen.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => gateScreen.classList.add('hidden'), 500);
+
+      fetch(defaultDataUrl)
+        .then(response => {
+          if (!response.ok) throw new Error("Yêu cầu dữ liệu thất bại.");
+          return response.json();
+        })
+        .then(data => {
+          defaultData = [];
+          data.forEach((item, index) => {
+            defaultData.push({
+              id: (index + 1).toString(),
+              keyword: item.keyword,
+              topic: item.topic || "Lập trình",
+              hints: item.hints || ["Chưa có gợi ý."],
+              content: item.content
+            });
+          });
+          setupAndRunApplication();
+        })
+        .catch(error => {
+          console.error("❌ Lỗi tải tệp tin dữ liệu:", error);
+          document.getElementById('cloudErrorScreen').classList.remove('hidden');
+        });
+    }
+
+    function bypassCloudErrorAndLoadOffline() {
+      document.getElementById('cloudErrorScreen').classList.add('hidden');
+      defaultData = JSON.parse(JSON.stringify(backupOfflineData));
+      setupAndRunApplication();
+    }
+
+    function setupAndRunApplication() {
+      document.getElementById('appMainWrapper').classList.remove('hidden');
+      loadStorageData();
+      populateTopicFilters();
+      renderLibraryGrid();
+      initializeChallengeState();
+      updateDashboardStats();
+    }
+
+    function lockApplication() {
+      sessionStorage.removeItem('memora_authorized');
+      window.location.reload();
+    }
+
+    // Quản lý Dark Mode mượt mà
+    function initTheme() {
+      if (localStorage.getItem('theme') === 'dark' || 
+          (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+
+    function loadStorageData() {
+      const stored = localStorage.getItem('memora_cards_v1_5');
+      if (stored && stored !== "undefined") {
+        try {
+          memoryCards = JSON.parse(stored);
+        } catch (e) {
+          console.error("Dữ liệu lỗi. Đang khôi phục dữ liệu gốc.", e);
+          memoryCards = JSON.parse(JSON.stringify(defaultData));
+        }
+      } else {
+        memoryCards = JSON.parse(JSON.stringify(defaultData));
+        saveToLocalStorage();
+      }
+
+      const storedStats = localStorage.getItem('memora_stats_v1_5');
+      if (storedStats) {
+        try {
+          stats = JSON.parse(storedStats);
+        } catch (e) {
+          console.error("Không thể phục hồi thống kê.", e);
+        }
+      }
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('memora_cards_v1_5', JSON.stringify(memoryCards));
+    }
+
+    function saveStatsToLocalStorage() {
+      localStorage.setItem('memora_stats_v1_5', JSON.stringify(stats));
+    }
+
+    // Tự động quét và hiển thị danh mục chủ đề trên bộ lọc
+    function populateTopicFilters() {
+      const topics = new Set();
+      memoryCards.forEach(card => {
+        if (card.topic) topics.add(card.topic.trim());
+      });
+
+      const libFilter = document.getElementById('libraryTopicFilter');
+      const chalFilter = document.getElementById('challengeTopicFilter');
+
+      const prevLibVal = libFilter.value;
+      const prevChalVal = chalFilter.value;
+
+      libFilter.innerHTML = `<option value="all">📁 Tất cả chủ đề</option>`;
+      chalFilter.innerHTML = `<option value="all">🌟 Tất cả</option>`;
+
+      topics.forEach(topic => {
+        const optionHTML = `<option value="${topic}">${topic}</option>`;
+        libFilter.innerHTML += optionHTML;
+        chalFilter.innerHTML += optionHTML;
+      });
+
+      // Nếu đang trong chế độ thử thách đơn lẻ, giữ nguyên giá trị
+      if (prevChalVal === 'single_card') {
+        chalFilter.innerHTML += `<option value="single_card">🎯 Thẻ đã chọn từ thư viện</option>`;
+        chalFilter.value = 'single_card';
+      } else if (Array.from(topics).includes(prevChalVal)) {
+        chalFilter.value = prevChalVal;
+      }
+
+      if (Array.from(topics).includes(prevLibVal)) libFilter.value = prevLibVal;
+    }
+
+    function resetToDefaults() {
+      if(confirm("Bạn có chắc chắn muốn khôi phục tất cả các thẻ ghi nhớ ban đầu từ Cloud? Thẻ tự tạo của bạn sẽ bị ghi đè.")) {
+        memoryCards = JSON.parse(JSON.stringify(defaultData));
+        saveToLocalStorage();
+        
+        stats = {
+          reviewed: 0,
+          correctCount: 0,
+          totalSimilarity: 0,
+          maxMatch: 0,
+          hintsUsed: 0,
+          streak: 0
+        };
+        saveStatsToLocalStorage();
+
+        populateTopicFilters();
+        renderLibraryGrid();
+        initializeChallengeState();
+        updateDashboardStats();
+        switchTab('library');
+      }
+    }
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      
+      const libTab = document.getElementById('tabLibrary');
+      const chalTab = document.getElementById('tabChallenge');
+      const libSec = document.getElementById('sectionLibrary');
+      const chalSec = document.getElementById('sectionChallenge');
+
+      if (tabName === 'library') {
+        libTab.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm";
+        chalTab.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
+        
+        libSec.classList.remove('hidden');
+        chalSec.classList.add('hidden');
+        
+        renderLibraryGrid(); 
+      } else {
+        chalTab.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm";
+        libTab.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
+        
+        chalSec.classList.remove('hidden');
+        libSec.classList.add('hidden');
+
+        if (currentChallengeIndex === -1 || currentChallengeIndex >= memoryCards.length) {
+          initializeChallengeState();
+        }
+      }
+    }
+
+    // SECTION 1: LIBRARY RENDERING & INTERACTIONS
+    function renderLibraryGrid() {
+      const grid = document.getElementById('libraryGrid');
+      const emptyState = document.getElementById('libraryEmptyState');
+      const searchVal = document.getElementById('librarySearchInput').value.toLowerCase();
+      const topicVal = document.getElementById('libraryTopicFilter').value;
+      
+      grid.innerHTML = "";
+
+      const filtered = memoryCards.filter(card => {
+        const matchesSearch = 
+          card.keyword.toLowerCase().includes(searchVal) ||
+          card.content.toLowerCase().includes(searchVal) ||
+          card.hints.some(h => h.toLowerCase().includes(searchVal));
+        
+        const matchesTopic = (topicVal === 'all' || (card.topic && card.topic.trim() === topicVal));
+
+        return matchesSearch && matchesTopic;
+      });
+
+      document.getElementById('cardCountLabel').innerText = `${filtered.length} Thẻ`;
+
+      if (filtered.length === 0) {
+        grid.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      grid.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+
+      filtered.forEach(card => {
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = "h-56 perspective-1000 group cursor-pointer";
+        
+        cardWrapper.innerHTML = `
+          <div id="cardInner-${card.id}" onclick="flipCard('${card.id}')" class="card-inner w-full h-full relative preserve-3d rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
+            
+            <!-- MẶT TRƯỚC (Hiển thị Thuật Ngữ & Chủ Đề) -->
+            <div class="absolute inset-0 backface-hidden p-6 flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 rounded-md tracking-wider flex items-center gap-1">
+                    <i class="fa-solid fa-folder-open"></i> ${card.topic || "Không phân loại"}
+                  </span>
+                  <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <!-- NÚT THỬ THÁCH NHANH THẺ NÀY -->
+                    <button onclick="event.stopPropagation(); startSingleChallenge('${card.id}')" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" title="Thử thách thẻ này ngay">
+                      <i class="fa-solid fa-graduation-cap text-xs"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); editCard('${card.id}')" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Chỉnh sửa">
+                      <i class="fa-solid fa-pen-to-square text-xs"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); deleteCard('${card.id}')" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors" title="Xóa thẻ">
+                      <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <h3 class="text-lg font-extrabold text-slate-900 dark:text-white line-clamp-2 pt-2">${card.keyword}</h3>
+              </div>
+              
+              <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                <span class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1">
+                  <i class="fa-regular fa-eye"></i> Chạm để lật thẻ
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono">${card.hints.filter(Boolean).length} Gợi ý</span>
+              </div>
+            </div>
+
+            <!-- MẶT SAU (Hiển thị Nội Dung Cần Ghi Nhớ) -->
+            <div class="absolute inset-0 backface-hidden rotate-y-180 p-6 flex flex-col justify-between bg-slate-50 dark:bg-slate-950 rounded-2xl">
+              <div class="space-y-2 overflow-y-auto pr-1 h-36">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">Đáp Án Khớp</span>
+                  <span class="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-bold">${card.keyword}</span>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-slate-300 font-normal leading-relaxed pt-1 whitespace-pre-line">${card.content}</p>
+              </div>
+
+              <div class="pt-3 border-t border-slate-200/50 dark:border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+                <span class="italic">Chạm lại để ẩn</span>
+                <!-- NÚT THỬ THÁCH SAU KHI LẬT XEM ĐÁP ÁN -->
+                <button onclick="event.stopPropagation(); startSingleChallenge('${card.id}')" class="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline">
+                  <i class="fa-solid fa-keyboard"></i> Thử thách gõ thẻ này
+                </button>
+              </div>
+            </div>
+
+          </div>
+        `;
+        grid.appendChild(cardWrapper);
+      });
+    }
+
+    // Kích hoạt thử thách riêng lẻ thẻ được chọn từ Thư viện
+    function startSingleChallenge(cardId) {
+      const index = memoryCards.findIndex(c => c.id === cardId);
+      if (index === -1) return;
+
+      const chalFilter = document.getElementById('challengeTopicFilter');
+      
+      // Tạo tuỳ chọn thẻ đã chọn nếu chưa tồn tại
+      let singleOption = chalFilter.querySelector('option[value="single_card"]');
+      if (!singleOption) {
+        singleOption = document.createElement('option');
+        singleOption.value = "single_card";
+        singleOption.innerText = "🎯 Thẻ đã chọn từ thư viện";
+        chalFilter.appendChild(singleOption);
+      }
+      
+      chalFilter.value = "single_card";
+      
+      // Khóa chỉ số chỉ ôn thẻ này
+      filteredChallengeIndices = [index];
+      currentFilteredPointer = 0;
+      currentChallengeIndex = index;
+      
+      resetCurrentChallenge();
+      
+      // Di chuyển sang màn hình thử thách
+      switchTab('challenge');
+    }
+
+    // Xử lý cơ chế xoay thẻ chuẩn 3D bảo đảm không bị lỗi
+    function flipCard(cardId) {
+      const cardElement = document.getElementById(`cardInner-${cardId}`);
+      if (cardElement) {
+        cardElement.classList.toggle('is-flipped');
+      }
+    }
+
+    function filterCards() {
+      renderLibraryGrid();
+    }
+
+    // MODAL STATE & ACTIONS
+    function openAddCardModal() {
+      document.getElementById('cardForm').reset();
+      document.getElementById('formCardId').value = "";
+      document.getElementById('modalTitle').innerText = "Thêm Thẻ Ghi Nhớ Mới";
+      
+      const modal = document.getElementById('cardModal');
+      modal.classList.remove('hidden');
+    }
+
+    function closeAddCardModal() {
+      const modal = document.getElementById('cardModal');
+      modal.classList.add('hidden');
+    }
+
+    function editCard(id) {
+      const card = memoryCards.find(c => c.id === id);
+      if (!card) return;
+
+      document.getElementById('formCardId').value = card.id;
+      document.getElementById('formKeyword').value = card.keyword;
+      document.getElementById('formTopic').value = card.topic || "";
+      document.getElementById('formContent').value = card.content;
+      document.getElementById('formHint1').value = card.hints[0] || "";
+      document.getElementById('formHint2').value = card.hints[1] || "";
+      document.getElementById('formHint3').value = card.hints[2] || "";
+
+      document.getElementById('modalTitle').innerText = "Chỉnh Sửa Thẻ Ghi Nhớ";
+      const modal = document.getElementById('cardModal');
+      modal.classList.remove('hidden');
+    }
+
+    function saveCard(event) {
+      event.preventDefault();
+
+      const id = document.getElementById('formCardId').value;
+      const keyword = document.getElementById('formKeyword').value.trim();
+      const topic = document.getElementById('formTopic').value.trim() || "Không phân loại";
+      const content = document.getElementById('formContent').value.trim();
+      
+      const hints = [
+        document.getElementById('formHint1').value.trim(),
+        document.getElementById('formHint2').value.trim(),
+        document.getElementById('formHint3').value.trim()
+      ].filter(Boolean);
+
+      if (!keyword || !content || hints.length === 0) {
+        alert("Vui lòng điền tối thiểu: Thuật ngữ, Chủ đề, Định nghĩa và Gợi ý 1.");
+        return;
+      }
+
+      if (id) {
+        const idx = memoryCards.findIndex(c => c.id === id);
+        if (idx !== -1) {
+          memoryCards[idx] = { id, keyword, topic, hints, content };
+        }
+      } else {
+        const newCard = {
+          id: Date.now().toString(),
+          keyword,
+          topic,
+          hints,
+          content
+        };
+        memoryCards.push(newCard);
+      }
+
+      saveToLocalStorage();
+      populateTopicFilters();
+      closeAddCardModal();
+      renderLibraryGrid();
+      initializeChallengeState();
+    }
+
+    function deleteCard(id) {
+      if (confirm("Bạn có chắc chắn muốn xóa vĩnh viễn thẻ này?")) {
+        memoryCards = memoryCards.filter(c => c.id !== id);
+        saveToLocalStorage();
+        populateTopicFilters();
+        renderLibraryGrid();
+        initializeChallengeState();
+      }
+    }
+
+    // SECTION 2: ACTIVE RECALL CHALLENGE CONTROLLER
+    function changeChallengeFilter() {
+      // Khi người dùng đổi chủ đề, nếu chuyển khỏi single_card, xoá tuỳ chọn tạm thời này
+      const chalFilter = document.getElementById('challengeTopicFilter');
+      if (chalFilter.value !== 'single_card') {
+        const singleOption = chalFilter.querySelector('option[value="single_card"]');
+        if (singleOption) singleOption.remove();
+      }
+      initializeChallengeState();
+    }
+
+    function changeChallengeOrderMode() {
+      initializeChallengeState();
+    }
+
+    function initializeChallengeState() {
+      if (memoryCards.length === 0) {
+        document.getElementById('challengeKeyword').innerText = "Hãy tạo thẻ ghi nhớ trước!";
+        document.getElementById('challengeTopicBadge').innerText = "Rỗng";
+        document.getElementById('challengeInput').disabled = true;
+        document.getElementById('challengeCardProgress').innerText = "0/0";
+        return;
+      }
+
+      document.getElementById('challengeInput').disabled = false;
+      
+      const selectedTopic = document.getElementById('challengeTopicFilter').value;
+      
+      // Nếu là chế độ thẻ riêng lẻ, bỏ qua việc thiết lập lại mảng
+      if (selectedTopic === 'single_card') {
+        if (filteredChallengeIndices.length > 0) {
+          currentFilteredPointer = 0;
+          currentChallengeIndex = filteredChallengeIndices[currentFilteredPointer];
+          resetCurrentChallenge();
+        }
+        return;
+      }
+
+      filteredChallengeIndices = [];
+      memoryCards.forEach((card, index) => {
+        if (selectedTopic === 'all' || (card.topic && card.topic.trim() === selectedTopic)) {
+          filteredChallengeIndices.push(index);
+        }
+      });
+
+      if (filteredChallengeIndices.length === 0) {
+        document.getElementById('challengeKeyword').innerText = "Không có thẻ trong chủ đề này!";
+        document.getElementById('challengeTopicBadge').innerText = selectedTopic;
+        document.getElementById('challengeInput').disabled = true;
+        document.getElementById('challengeCardProgress').innerText = "0/0";
+        return;
+      }
+
+      const orderMode = document.getElementById('challengeOrderMode').value;
+      if (orderMode === 'random') {
+        currentFilteredPointer = Math.floor(Math.random() * filteredChallengeIndices.length);
+      } else {
+        currentFilteredPointer = 0;
+      }
+      
+      currentChallengeIndex = filteredChallengeIndices[currentFilteredPointer];
+      resetCurrentChallenge();
+    }
+
+    function resetCurrentChallenge() {
+      if (currentChallengeIndex === -1 || currentChallengeIndex >= memoryCards.length) return;
+
+      const card = memoryCards[currentChallengeIndex];
+      const selectedTopic = document.getElementById('challengeTopicFilter').value;
+      
+      if (selectedTopic === 'single_card') {
+        document.getElementById('challengeCardProgress').innerText = `Thử Thách Riêng Lẻ`;
+      } else {
+        const relativePosition = currentFilteredPointer + 1;
+        document.getElementById('challengeCardProgress').innerText = `Thẻ ${relativePosition}/${filteredChallengeIndices.length}`;
+      }
+      
+      document.getElementById('challengeKeyword').innerText = card.keyword;
+      document.getElementById('challengeTopicBadge').innerText = card.topic || "Không phân loại";
+      
+      const inputArea = document.getElementById('challengeInput');
+      inputArea.value = "";
+      inputArea.className = "w-full p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm font-sans resize-y leading-relaxed";
+      document.getElementById('charCountLabel').innerText = "0 ký tự";
+
+      document.getElementById('resultFrame').classList.add('hidden');
+      revealedHintsCount = 0;
+      updateHintsUI();
+    }
+
+    function updateInputCounter() {
+      const input = document.getElementById('challengeInput').value;
+      document.getElementById('charCountLabel').innerText = `${input.length} ký tự`;
+    }
+
+    function updateHintsUI() {
+      const card = memoryCards[currentChallengeIndex];
+      if (!card) return;
+
+      const hintsList = card.hints || [];
+      const hintBtn = document.getElementById('revealHintBtn');
+      const hintBtnText = document.getElementById('hintBtnText');
+      const hintPlaceholder = document.getElementById('noHintsRevealedPlaceholder');
+
+      for (let i = 1; i <= 3; i++) {
+        const item = document.getElementById(`hintItem${i}`);
+        const txt = document.getElementById(`hintText${i}`);
+        
+        if (i <= hintsList.length && i <= revealedHintsCount) {
+          item.classList.remove('hidden');
+          txt.innerText = hintsList[i - 1];
+        } else {
+          item.classList.add('hidden');
+        }
+      }
+
+      if (revealedHintsCount > 0) {
+        hintPlaceholder.classList.add('hidden');
+      } else {
+        hintPlaceholder.classList.remove('hidden');
+      }
+
+      if (revealedHintsCount >= hintsList.length) {
+        hintBtn.classList.add('opacity-50', 'pointer-events-none');
+        hintBtnText.innerText = "Đã xem hết gợi ý";
+      } else {
+        hintBtn.classList.remove('opacity-50', 'pointer-events-none');
+        hintBtnText.innerText = `Xem Gợi Ý ${revealedHintsCount + 1}`;
+      }
+    }
+
+    function revealNextHint() {
+      const card = memoryCards[currentChallengeIndex];
+      if (!card) return;
+
+      if (revealedHintsCount < card.hints.length) {
+        revealedHintsCount++;
+        stats.hintsUsed++;
+        updateHintsUI();
+        updateDashboardStats();
+      }
+    }
+
+    function skipToNextChallenge() {
+      const selectedTopic = document.getElementById('challengeTopicFilter').value;
+      
+      // Nếu đang trong thử thách riêng lẻ, nút Đổi thẻ sẽ cho phép nhập lại thẻ này từ đầu
+      if (selectedTopic === 'single_card' || filteredChallengeIndices.length <= 1) {
+        resetCurrentChallenge();
+        return;
+      }
+
+      const orderMode = document.getElementById('challengeOrderMode').value;
+      
+      if (orderMode === 'random') {
+        let nextPointer = currentFilteredPointer;
+        while (nextPointer === currentFilteredPointer) {
+          nextPointer = Math.floor(Math.random() * filteredChallengeIndices.length);
+        }
+        currentFilteredPointer = nextPointer;
+      } else {
+        currentFilteredPointer = (currentFilteredPointer + 1) % filteredChallengeIndices.length;
+      }
+
+      currentChallengeIndex = filteredChallengeIndices[currentFilteredPointer];
+      resetCurrentChallenge();
+    }
+
+    // THUẬT TOÁN ĐỐI CHIẾU VÀ ĐÁNH GIÁ CHÍNH XÁC TỪNG TỪ (LCS ALGORITHM)
+    function diffCheck(targetText, inputText) {
+      const tokenize = (text) => {
+        return text.trim().split(/\s+/).filter(Boolean);
+      };
+
+      const targetWords = tokenize(targetText);
+      const inputWords = tokenize(inputText);
+
+      const n = targetWords.length;
+      const m = inputWords.length;
+
+      const cleanToken = (str) => {
+        return str.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()”“""]/g,"");
+      };
+
+      const dp = Array(n + 1).fill(null).map(() => Array(m + 1).fill(0));
+
+      for (let i = 1; i <= n; i++) {
+        for (let j = 1; j <= m; j++) {
+          if (cleanToken(targetWords[i - 1]) === cleanToken(inputWords[j - 1])) {
+            dp[i][j] = dp[i - 1][j - 1] + 1;
+          } else {
+            dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+          }
+        }
+      }
+
+      let i = n;
+      let j = m;
+      const edits = [];
+
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && cleanToken(targetWords[i - 1]) === cleanToken(inputWords[j - 1])) {
+          edits.unshift({
+            type: 'correct',
+            word: targetWords[i - 1]
+          });
+          i--;
+          j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          edits.unshift({
+            type: 'incorrect',
+            word: inputWords[j - 1]
+          });
+          j--;
+        } else {
+          edits.unshift({
+            type: 'missing',
+            word: targetWords[i - 1]
+          });
+          i--;
+        }
+      }
+
+      const correctCount = edits.filter(e => e.type === 'correct').length;
+      const accuracyScore = n > 0 ? Math.round((correctCount / n) * 100) : 0;
+
+      return {
+        edits,
+        accuracy: accuracyScore
+      };
+    }
+
+    function evaluateAnswer() {
+      const card = memoryCards[currentChallengeIndex];
+      if (!card) return;
+
+      const userInput = document.getElementById('challengeInput').value;
+      const resultFrame = document.getElementById('resultFrame');
+      const diffOutput = document.getElementById('diffOutputContainer');
+      const accuracyBadge = document.getElementById('diffAccuracyBadge');
+
+      const diffResults = diffCheck(card.content, userInput);
+
+      diffOutput.innerHTML = "";
+      diffResults.edits.forEach(item => {
+        const tokenSpan = document.createElement('span');
+        tokenSpan.className = "inline-block px-1.5 py-0.5 mx-0.5 rounded-md font-medium text-sm transition-all";
+
+        if (item.type === 'correct') {
+          tokenSpan.classList.add('bg-emerald-100', 'dark:bg-emerald-950/40', 'text-emerald-800', 'dark:text-emerald-300', 'border', 'border-emerald-300/30');
+          tokenSpan.innerText = item.word;
+        } else if (item.type === 'incorrect') {
+          tokenSpan.classList.add('bg-rose-100', 'dark:bg-rose-950/40', 'text-rose-800', 'dark:text-rose-300', 'border', 'border-rose-300/30', 'line-through');
+          tokenSpan.innerText = item.word;
+        } else if (item.type === 'missing') {
+          tokenSpan.classList.add('bg-amber-50/50', 'dark:bg-amber-950/20', 'text-amber-700/80', 'dark:text-amber-400/80', 'border', 'border-amber-300/40', 'border-dashed');
+          tokenSpan.innerText = item.word;
+        }
+        
+        diffOutput.appendChild(tokenSpan);
+      });
+
+      resultFrame.classList.remove('hidden');
+
+      accuracyBadge.innerText = `${diffResults.accuracy}% Khớp`;
+      if (diffResults.accuracy >= 90) {
+        accuracyBadge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300";
+        stats.streak++;
+        stats.correctCount++;
+      } else if (diffResults.accuracy >= 60) {
+        accuracyBadge.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300";
+        stats.streak = 0; 
+      } else {
+        accuracyBadge.className = "text-xs font-bold px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300";
+        stats.streak = 0; 
+      }
+
+      stats.reviewed++;
+      stats.totalSimilarity += diffResults.accuracy;
+      if (diffResults.accuracy > stats.maxMatch) {
+        stats.maxMatch = diffResults.accuracy;
+      }
+
+      saveStatsToLocalStorage();
+      updateDashboardStats();
+    }
+
+    function updateDashboardStats() {
+      const avgAccuracy = stats.reviewed > 0 ? Math.round(stats.totalSimilarity / stats.reviewed) : 0;
+      
+      document.getElementById('navStreak').innerText = stats.streak;
+      document.getElementById('navAccuracy').innerText = `${avgAccuracy}%`;
+
+      document.getElementById('statReviewed').innerText = stats.reviewed;
+      document.getElementById('statAccuracy').innerText = `${avgAccuracy}%`;
+      document.getElementById('statHighScore').innerText = `${stats.maxMatch}%`;
+      document.getElementById('statHints').innerText = stats.hintsUsed;
+
+      const target = 5;
+      const percentage = Math.min((stats.streak / target) * 100, 100);
+      document.getElementById('streakTargetValue').innerText = `${stats.streak}/${target}`;
+      document.getElementById('streakProgressBar').style.width = `${percentage}%`;
+    }
+  </script>
+</body>
+</html>
