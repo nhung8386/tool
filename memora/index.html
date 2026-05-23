@@ -504,10 +504,7 @@
   <!-- JAVASCRIPT LOGIC AND CORE ALGORITHMS -->
   <script>
     // URL nguồn dữ liệu đám mây
-    const defaultDataUrl = './kh1-5.json';
-    // const defaultDataUrl = 'https://raw.githubusercontent.com/nhung8386/tool/refs/heads/main/kh1-5.json';
-    
-    const hashedCorrectPassword = "a06483011d6b1fcc6abc62d8c921879ee086e8094a7a5bfc71dc77935a2fe540";
+    const defaultDataUrl = './kh1-5.enc';
 
     // Danh sách dữ liệu cấu trúc gốc dự phòng (fallback khi cloud mất kết nối)
     const backupOfflineData = [
@@ -557,101 +554,25 @@
       streak: 0
     };
 
-    // Hàm tạo mã băm SHA-256 độc lập chuẩn hóa và hoàn toàn đồng bộ (Pure JS)
-    function sha256(ascii) {
-      function rightRotate(value, amount) {
-        return (value >>> amount) | (value << (32 - amount));
-      }
-      
-      var maxWord = Math.pow(2, 32);
-      var i, j;
-      var result = '';
-      var words = [];
-      var asciiLength = ascii.length * 8;
-      
-      var hash = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-      ];
-      
-      var k = [
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-      ];
-      
-      ascii += '\x80';
-      while (ascii.length % 64 - 56) ascii += '\x00';
-      
-      for (i = 0; i < ascii.length; i++) {
-        j = ascii.charCodeAt(i);
-        words[i >> 2] |= j << ((3 - i % 4) * 8);
-      }
-      
-      words[words.length] = ((asciiLength / maxWord) | 0);
-      words[words.length] = (asciiLength | 0);
-      
-      for (j = 0; j < words.length; ) {
-        var w = words.slice(j, j += 16);
-        var oldHash = hash.slice(0);
-        
-        var a = hash[0], b = hash[1], c = hash[2], d = hash[3],
-            e = hash[4], f = hash[5], g = hash[6], h = hash[7];
-            
-        for (i = 0; i < 64; i++) {
-          var w_i;
-          if (i < 16) {
-            w_i = w[i];
-          } else {
-            var s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-            var s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >>> 10);
-            w_i = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
-          }
-          w[i] = w_i;
-          
-          var temp1 = (h +
-            (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
-            ((e & f) ^ (~e & g)) +
-            k[i] +
-            w_i
-          ) | 0;
-          
-          var temp2 = ((rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
-            ((a & b) ^ (a & c) ^ (b & c))
-          ) | 0;
-          
-          h = g;
-          g = f;
-          f = e;
-          e = (d + temp1) | 0;
-          d = c;
-          c = b;
-          b = a;
-          a = (temp1 + temp2) | 0;
-        }
-        
-        hash[0] = (hash[0] + a) | 0;
-        hash[1] = (hash[1] + b) | 0;
-        hash[2] = (hash[2] + c) | 0;
-        hash[3] = (hash[3] + d) | 0;
-        hash[4] = (hash[4] + e) | 0;
-        hash[5] = (hash[5] + f) | 0;
-        hash[6] = (hash[6] + g) | 0;
-        hash[7] = (hash[7] + h) | 0;
-      }
-      
-      for (i = 0; i < 8; i++) {
-        for (j = 3; j + 1; j--) {
-          var byteVal = (hash[i] >> (j * 8)) & 255;
-          result += (byteVal < 16 ? '0' : '') + byteVal.toString(16);
-        }
-      }
-      return result;
+    // AES-256-GCM decrypt dùng Web Crypto API (built-in browser)
+    async function aesDecrypt(payload, password) {
+      const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+      const keyMat = await crypto.subtle.importKey(
+        'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']
+      );
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: b64(payload.s), iterations: 200000, hash: 'SHA-256' },
+        keyMat,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+      );
+      const ct  = b64(payload.d);
+      const tag = b64(payload.t);
+      const buf = new Uint8Array(ct.length + tag.length);
+      buf.set(ct); buf.set(tag, ct.length);
+      const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(payload.i) }, key, buf);
+      return JSON.parse(new TextDecoder().decode(dec));
     }
 
     // Xử lý ẩn/hiện mật khẩu trong ô nhập
@@ -667,29 +588,27 @@
       }
     }
 
-    // Xác nhận mật khẩu truy cập hệ thống (Tích hợp băm chuẩn hóa và kiểm tra fallback 144000)
-    function verifyGatekeeper(event) {
+    async function verifyGatekeeper(event) {
       event.preventDefault();
       const inputPass = document.getElementById('gatePassword').value;
-      const errorMsg = document.getElementById('passwordErrorMessage');
-      const gateCard = document.getElementById('gatekeeperCard');
-      
-      const inputHash = sha256(inputPass);
-      const sha256Of144000 = "518544e33d28929944fc179a9ef9616239f1c7d0137ff7fa7621c60a28fb68f5";
-      
-      // Chấp nhận khớp mã băm cũ (với subtle crypto cũ) hoặc mã băm chuẩn hóa SHA-256 mới của "144000"
-      if (inputHash === hashedCorrectPassword || inputPass === "144000" || inputHash === sha256Of144000) {
+      const errorMsg  = document.getElementById('passwordErrorMessage');
+      const gateCard  = document.getElementById('gatekeeperCard');
+
+      try {
+        const res     = await fetch(defaultDataUrl);
+        if (!res.ok) throw new Error('fetch');
+        const payload = await res.json();
+        const data    = await aesDecrypt(payload, inputPass);
+
         sessionStorage.setItem('memora_authorized', 'true');
+        sessionStorage.setItem('memora_pass', inputPass);
         errorMsg.classList.add('hidden');
-        loadDataAndInitialize();
-      } else {
+        loadDataFromDecrypted(data);
+      } catch {
         errorMsg.classList.remove('hidden');
         gateCard.classList.add('shake-animate');
-        document.getElementById('gatePassword').value = "";
-        
-        setTimeout(() => {
-          gateCard.classList.remove('shake-animate');
-        }, 400);
+        document.getElementById('gatePassword').value = '';
+        setTimeout(() => gateCard.classList.remove('shake-animate'), 400);
       }
     }
 
@@ -705,34 +624,36 @@
       }
     };
 
-    // Hàm gọi API tải dữ liệu đám mây và mở giao diện ứng dụng chính
-    function loadDataAndInitialize() {
+    async function loadDataAndInitialize() {
       const gateScreen = document.getElementById('gatekeeperScreen');
       gateScreen.classList.add('opacity-0', 'pointer-events-none');
       setTimeout(() => gateScreen.classList.add('hidden'), 500);
 
-      fetch(defaultDataUrl)
-        .then(response => {
-          if (!response.ok) throw new Error("Yêu cầu dữ liệu thất bại.");
-          return response.json();
-        })
-        .then(data => {
-          defaultData = [];
-          data.forEach((item, index) => {
-            defaultData.push({
-              id: (index + 1).toString(),
-              keyword: item.keyword,
-              topic: item.topic || "Lập trình",
-              hints: item.hints || ["Chưa có gợi ý."],
-              content: item.content
-            });
-          });
-          setupAndRunApplication();
-        })
-        .catch(error => {
-          console.error("❌ Lỗi tải tệp tin dữ liệu:", error);
-          document.getElementById('cloudErrorScreen').classList.remove('hidden');
+      try {
+        const pass    = sessionStorage.getItem('memora_pass');
+        const res     = await fetch(defaultDataUrl);
+        if (!res.ok) throw new Error('fetch');
+        const payload = await res.json();
+        const data    = await aesDecrypt(payload, pass);
+        loadDataFromDecrypted(data);
+      } catch (error) {
+        console.error('❌ Lỗi tải dữ liệu:', error);
+        document.getElementById('cloudErrorScreen').classList.remove('hidden');
+      }
+    }
+
+    function loadDataFromDecrypted(data) {
+      defaultData = [];
+      data.forEach((item, index) => {
+        defaultData.push({
+          id: (index + 1).toString(),
+          keyword: item.keyword,
+          topic: item.topic || 'Lập trình',
+          hints: item.hints || ['Chưa có gợi ý.'],
+          content: item.content
         });
+      });
+      setupAndRunApplication();
     }
 
     function bypassCloudErrorAndLoadOffline() {
